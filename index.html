@@ -1,1 +1,1115 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ERP Xavier Salgados</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#0f172a',
+                            nav: '#1e293b',
+                            accent: '#f97316',
+                            accentHover: '#ea580c'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .active-menu {
+            border-left: 4px solid #f97316;
+            background-color: #334155;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800">
+
+    <div id="login-screen" class="min-h-screen flex items-center justify-center bg-brand-dark p-4">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md">
+            <div class="text-center mb-8">
+                <div class="inline-flex p-4 bg-orange-100 text-brand-accent rounded-full mb-3">
+                    <i class="fa-solid font-bold fa-pie-chart text-3xl"></i>
+                </div>
+                <h1 class="text-2xl font-bold text-brand-dark">Xavier Salgados</h1>
+                <p class="text-gray-500 text-sm">ERP de Gestão Fabril & Financeira</p>
+            </div>
+            <form onsubmit="handleLogin(event)">
+                <div class="mb-4">
+                    <label class="block text-sm font-semibold mb-2">Usuário</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                            <i class="fa-solid fa-user"></i>
+                        </span>
+                        <input type="text" value="admin" class="w-full pl-10 pr-4 py-2 border rounded-lg" required>
+                    </div>
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-semibold mb-2">Senha</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
+                            <i class="fa-solid fa-lock"></i>
+                        </span>
+                        <input type="password" value="123456" class="w-full pl-10 pr-4 py-2 border rounded-lg" required>
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-brand-accent hover:bg-brand-accentHover text-white font-bold py-2.5 px-4 rounded-lg shadow-md transition">
+                    Acessar Sistema
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="main-system" class="hidden min-h-screen flex flex-col md:flex-row">
+        
+        <aside class="w-full md:w-64 bg-brand-nav text-white flex flex-col shadow-xl z-20">
+            <div class="p-5 bg-brand-dark flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <span class="font-bold text-lg tracking-wider text-orange-500">XAVIER ERP</span>
+                </div>
+                <span class="bg-brand-accent text-xs px-2 py-0.5 rounded font-mono">v1.4</span>
+            </div>
+            <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+                <button onclick="switchView('dashboard')" id="btn-dashboard" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-slate-700 transition active-menu">
+                    <i class="fa-solid fa-chart-pie w-5"></i> <span>Dashboard / Balanço</span>
+                </button>
+                <button onclick="switchView('clientes')" id="btn-clientes" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-slate-700 transition">
+                    <i class="fa-solid fa-users w-5"></i> <span>Clientes</span>
+                </button>
+                <button onclick="switchView('produtos')" id="btn-produtos" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-slate-700 transition">
+                    <i class="fa-solid fa-box w-5"></i> <span>Produtos / Custos</span>
+                </button>
+                <button onclick="switchView('pedidos')" id="btn-pedidos" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-slate-700 transition">
+                    <i class="fa-solid fa-file-invoice-dollar w-5"></i> <span>Vendas e Recebíveis</span>
+                </button>
+                <button onclick="switchView('producao')" id="btn-producao" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-slate-700 transition">
+                    <i class="fa-solid fa-fire-burner w-5"></i> <span>Ordens de Fábrica</span>
+                </button>
+                <button onclick="switchView('compras')" id="btn-compras" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-slate-700 transition">
+                    <i class="fa-solid fa-wallet w-5"></i> <span>Contas a Pagar (Fábrica)</span>
+                </button>
+                <button onclick="switchView('relatorios')" id="btn-relatorios" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-slate-700 transition">
+                    <i class="fa-solid fa-chart-line w-5"></i> <span>Relatórios & Gráficos</span>
+                </button>
+                <button onclick="switchView('estoque')" id="btn-estoque" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-slate-700 transition">
+                    <i class="fa-solid fa-warehouse w-5"></i> <span>Estoque</span>
+                </button>
+            </nav>
+            <div class="p-4 bg-brand-dark text-sm flex justify-between items-center">
+                <div><p class="font-semibold text-gray-300">Administrador</p></div>
+                <button onclick="handleLogout()" class="text-gray-400 hover:text-brand-accent"><i class="fa-solid fa-right-from-bracket"></i></button>
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col overflow-x-hidden">
+            <header class="bg-white shadow px-6 py-4 flex justify-between items-center">
+                <h2 id="page-title" class="text-xl font-bold text-brand-dark">Dashboard & Balanço Geral</h2>
+                <div class="text-sm text-gray-500">ERP Xavier Salgados</div>
+            </header>
+
+            <div class="p-6 flex-1">
+                
+                <section id="view-dashboard" class="space-y-6">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500 flex items-center justify-between">
+                            <div><p class="text-sm font-medium text-gray-500">Total de Clientes</p><h3 id="dash-tot-clientes" class="text-2xl font-bold">0</h3></div>
+                            <i class="fa-solid fa-users text-3xl text-blue-200"></i>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-indigo-500 flex items-center justify-between">
+                            <div><p class="text-sm font-medium text-gray-500">Total de Produtos</p><h3 id="dash-tot-produtos" class="text-2xl font-bold">0</h3></div>
+                            <i class="fa-solid fa-box text-3xl text-indigo-200"></i>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-orange-500 flex items-center justify-between">
+                            <div><p class="text-sm font-medium text-gray-500">Pedidos Lançados</p><h3 id="dash-pedidos-dia" class="text-2xl font-bold">0</h3></div>
+                            <i class="fa-solid fa-receipt text-3xl text-orange-200"></i>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 text-white p-6 rounded-2xl shadow-lg">
+                        <h4 class="text-orange-500 font-bold uppercase tracking-wider text-xs mb-4"><i class="fa-solid fa-scale-balanced mr-2"></i>Balanço Financeiro (Faturamento - Compras - Taxas = Lucro Líquido)</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 divide-y md:divide-y-0 md:divide-x divide-slate-700">
+                            <div>
+                                <span class="text-gray-400 text-xs block">Faturamento Bruto</span>
+                                <span id="balanco-faturamento" class="text-xl font-black text-green-400">R$ 0,00</span>
+                            </div>
+                            <div class="md:pl-4">
+                                <span class="text-gray-400 text-xs block">Custo Fábrica / Compras</span>
+                                <span id="balanco-compras" class="text-xl font-black text-red-400">R$ 0,00</span>
+                            </div>
+                            <div class="md:pl-4">
+                                <span class="text-gray-400 text-xs block">Taxas Adquirentes (Cartões)</span>
+                                <span id="balanco-taxas" class="text-xl font-black text-amber-500">R$ 0,00</span>
+                            </div>
+                            <div class="md:pl-4">
+                                <span class="text-orange-400 text-xs block font-bold">LUCRO REAL LÍQUIDO</span>
+                                <span id="balanco-lucro" class="text-2xl font-black text-white">R$ 0,00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-sm">
+                        <h4 class="font-bold text-red-600 mb-4"><i class="fa-solid fa-triangle-exclamation mr-2"></i>Alerta de Insumos com Estoque Baixo</h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-gray-50 text-xs uppercase text-gray-500">
+                                    <tr><th class="px-4 py-2">Código</th><th class="px-4 py-2">Produto</th><th class="px-4 py-2 text-center">Estoque Atual</th><th class="px-4 py-2 text-center">Mínimo</th></tr>
+                                </thead>
+                                <tbody id="dash-estoque-critico"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="view-clientes" class="hidden space-y-4">
+                    <div class="flex justify-between items-center">
+                        <input type="text" id="search-clientes" oninput="renderClientes()" placeholder="Pesquisar por nome..." class="border p-2 rounded-lg w-72">
+                        <button onclick="openClienteModal()" class="bg-brand-accent text-white px-4 py-2 rounded-lg font-bold"><i class="fa-solid fa-plus mr-1"></i> Novo Cliente</button>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-100 text-gray-700">
+                                <tr><th class="p-4">Cód</th><th class="p-4">Nome Obrigatório</th><th class="p-4">WhatsApp</th><th class="p-4">Bairro</th><th class="p-4 text-center">Ações</th></tr>
+                            </thead>
+                            <tbody id="table-clientes"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="view-produtos" class="hidden space-y-4">
+                    <div class="flex justify-between items-center">
+                        <input type="text" id="search-produtos" oninput="renderProdutos()" placeholder="Pesquisar salgados..." class="border p-2 rounded-lg w-72">
+                        <button onclick="openProdutoModal()" class="bg-brand-accent text-white px-4 py-2 rounded-lg font-bold"><i class="fa-solid fa-plus mr-1"></i> Novo Produto</button>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-100 text-gray-700">
+                                <tr><th class="p-4">Cód</th><th class="p-4">Nome</th><th class="p-4">Custo Fábrica (R$)</th><th class="p-4">Preço Venda (R$)</th><th class="p-4 text-center">Estoque Atual</th><th class="p-4 text-center">Ações</th></tr>
+                            </thead>
+                            <tbody id="table-produtos"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="view-pedidos" class="hidden space-y-6">
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold text-slate-700"><i class="fa-solid fa-receipt mr-2"></i>Pedidos de Venda Lançados</h3>
+                            <button onclick="openPedidoModal()" class="bg-brand-accent text-white px-4 py-2 rounded-lg font-bold"><i class="fa-solid fa-cart-plus mr-1"></i> Criar Novo Pedido</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-slate-100 text-gray-700">
+                                    <tr>
+                                        <th class="p-4">Nº Pedido</th>
+                                        <th class="p-4">Data/Cliente</th>
+                                        <th class="p-4">Itens Incluídos</th>
+                                        <th class="p-4 text-right">Valor Total</th>
+                                        <th class="p-4 text-center">Status Entrega</th>
+                                        <th class="p-4 text-center">Status Pago</th>
+                                        <th class="p-4 text-center">Ações Rápidas</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-pedidos"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-green-200">
+                        <h3 class="text-lg font-bold text-green-800 mb-2"><i class="fa-solid fa-comments-dollar mr-2"></i>Contas a Receber (Clientes Tonetti)</h3>
+                        <p class="text-xs text-gray-500 mb-4">Abaixo encontram-se as parcelas faturadas para recebimento no próximo 5º dia útil.</p>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm">
+                                <thead class="bg-green-50 text-green-900">
+                                    <tr><th class="p-3">Ref Pedido</th><th class="p-3">Cliente</th><th class="p-3">Vencimento</th><th class="p-3 text-right">Valor</th><th class="p-3 text-center">Status</th><th class="p-3 text-center">Ações</th></tr>
+                                </thead>
+                                <tbody id="table-financeiro"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="view-producao" class="hidden space-y-4">
+                    <div class="bg-white p-6 rounded-xl shadow border border-slate-200 space-y-4">
+                        <h3 class="text-md font-bold text-slate-800 uppercase tracking-wider"><i class="fa-solid fa-boxes-packing mr-2 text-brand-accent"></i>Disparar Nova Ordem de Reposição ou Encomenda</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 bg-slate-50 p-4 rounded-lg">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Tipo da Ordem</label>
+                                <select id="of-tipo" class="w-full border p-2 rounded bg-white text-sm font-bold">
+                                    <option value="ENCOMENDA">ATENDER ENCOMENDAS (Clientes)</option>
+                                    <option value="REPOSICAO">REPOSIÇÃO DE ESTOQUE (Saldo Geral)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Selecione o Salgado</label>
+                                <select id="of-produto" class="w-full border p-2 rounded bg-white text-sm"></select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Quantidade</label>
+                                <input type="number" id="of-qtd" min="1" value="100" class="w-full border p-2 rounded bg-white text-sm">
+                            </div>
+                            <div class="flex items-end">
+                                <button onclick="gerarPlanilhaOrdemFabrica()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 px-3 rounded text-xs flex items-center justify-center shadow">
+                                    <i class="fa-solid fa-file-excel mr-2 text-emerald-400"></i> Baixar Planilha (.CSV)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-4 bg-orange-50 border border-orange-200 text-orange-800 rounded-lg text-sm flex justify-between items-center">
+                        <div>
+                            <i class="fa-solid fa-circle-info mr-1"></i> <strong>Fila Ativa de Ordens Enviadas:</strong> Ao clicar em <strong>Baixar Entrega</strong>, o sistema fará a dedução dos saldos vinculados se for encomenda ou somará o saldo se for reposição.
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-100 text-gray-700">
+                                <tr>
+                                    <th class="p-4">Nº da Ordem</th>
+                                    <th class="p-4">Data Solicitação</th>
+                                    <th class="p-4">Tipo Ordem</th>
+                                    <th class="p-4">Item / Detalhes</th>
+                                    <th class="p-4 text-center">Quantidade</th>
+                                    <th class="p-4 text-right">Custo Total</th>
+                                    <th class="p-4 text-center">Ação Interativa</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-producao"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="view-compras" class="hidden space-y-4">
+                    <div class="p-4 bg-red-50 border border-red-200 text-red-800 rounded-lg text-sm">
+                        <i class="fa-solid fa-wallet mr-1"></i> <strong>Contas a Pagar (Fábrica):</strong> Toda encomenda ou reposição gerada cria uma pendência de custo nesta aba. Clique para dar baixa após liquidar o saldo com a fábrica.
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-900 text-white">
+                                <tr>
+                                    <th class="p-4">Ordem / Pedido Origem</th>
+                                    <th class="p-4">Tipo da Operação</th>
+                                    <th class="p-4 text-right">Valor do Custo (A Pagar)</th>
+                                    <th class="p-4 text-center">Status Pagamento</th>
+                                    <th class="p-4 text-center">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="table-contas-pagar"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="view-relatorios" class="hidden space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white p-5 rounded-xl shadow border">
+                            <h3 class="text-sm font-bold uppercase text-slate-700 mb-3"><i class="fa-solid fa-fire text-orange-500 mr-2"></i>Salgados Mais Vendidos (Manter Estoque Maior)</h3>
+                            <div class="overflow-y-auto max-h-64">
+                                <table class="w-full text-left text-xs">
+                                    <thead class="bg-slate-50">
+                                        <tr><th class="p-2">Produto</th><th class="p-2 text-center">Qtd Total Vendida</th></tr>
+                                    </thead>
+                                    <tbody id="report-mais-vendidos"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-xl shadow border">
+                            <h3 class="text-sm font-bold uppercase text-slate-700 mb-3"><i class="fa-solid fa-user-tag text-blue-500 mr-2"></i>Ranking de Faturamento Mensal por Cliente</h3>
+                            <div class="overflow-y-auto max-h-64">
+                                <table class="w-full text-left text-xs">
+                                    <thead class="bg-slate-50">
+                                        <tr><th class="p-2">Nome do Cliente</th><th class="p-2 text-right">Total Comprado (R$)</th></tr>
+                                    </thead>
+                                    <tbody id="report-clientes-mes"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow border">
+                        <h3 class="text-sm font-bold uppercase text-slate-700 mb-2"><i class="fa-solid fa-chart-area text-indigo-500 mr-2"></i>Variação e Crescimento de Vendas Mês a Mês</h3>
+                        <p class="text-xs text-gray-500 mb-4">Análise visual para detecção de sazonalidade e metas comerciais de crescimento.</p>
+                        <div class="w-full flex justify-center">
+                            <div class="w-full max-w-4xl h-64 relative">
+                                <canvas id="graficoVendasMes"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="view-estoque" class="hidden space-y-4">
+                    <div class="bg-white rounded-xl shadow-sm overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-100 text-gray-700">
+                                <tr><th class="p-4">Código</th><th class="p-4">Produto</th><th class="p-4 text-center">Estoque Atual</th><th class="p-4 text-center">Mínimo</th><th class="p-4 text-center">Status</th></tr>
+                            </thead>
+                            <tbody id="table-estoque"></tbody>
+                        </table>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <div id="modal-cliente" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl max-w-xl w-full p-6 space-y-4">
+            <h3 class="text-lg font-bold text-brand-dark">Cadastrar Cliente</h3>
+            <form id="form-cliente" onsubmit="saveCliente(event)" class="space-y-4">
+                <input type="hidden" id="cliente-idx">
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Nome do Cliente <span class="text-red-500">*Obrigatório</span></label>
+                    <input type="text" id="cli-nome" class="w-full border p-2 rounded-lg" required placeholder="Digite o nome do cliente">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-xs text-gray-500 mb-1">Código (Opcional)</label><input type="text" id="cli-codigo" class="w-full border p-2 rounded-lg"></div>
+                    <div><label class="block text-xs text-gray-500 mb-1">WhatsApp (Opcional)</label><input type="text" id="cli-whatsapp" class="w-full border p-2 rounded-lg"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-xs text-gray-500 mb-1">Bairro (Opcional)</label><input type="text" id="cli-bairro" class="w-full border p-2 rounded-lg"></div>
+                    <div><label class="block text-xs text-gray-500 mb-1">Forma de Pagamento Padrão</label><select id="cli-pagamento" class="w-full border p-2 rounded-lg"><option>Dinheiro / Pix</option><option>Cartão de Crédito</option><option>Débito</option><option>Tonetti</option><option>Boleto Faturado</option></select></div>
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button type="button" onclick="closeModal('modal-cliente')" class="border px-4 py-2 rounded-lg">Cancelar</button>
+                    <button type="submit" class="bg-brand-accent text-white px-4 py-2 rounded-lg font-bold">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-produto" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4">
+            <h3 id="modal-produto-title" class="text-lg font-bold">Cadastrar Produto</h3>
+            <form id="form-produto" onsubmit="saveProduto(event)" class="space-y-4">
+                <input type="hidden" id="produto-idx">
+                <div><label class="block text-xs font-bold text-gray-600 mb-1">Nome do Salgado</label><input type="text" id="prod-nome" class="w-full border p-2 rounded-lg" required></div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-xs font-bold text-gray-600 mb-1">Cód</label><input type="text" id="prod-codigo" class="w-full border p-2 rounded-lg" required></div>
+                    <div><label class="block text-xs font-bold text-gray-600 mb-1">Custo Fábrica (R$)</label><input type="number" id="prod-custo" step="0.01" class="w-full border p-2 rounded-lg" required></div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-xs font-bold text-gray-600 mb-1">Preço Venda (R$)</label><input type="number" id="prod-venda" step="0.01" class="w-full border p-2 rounded-lg" required></div>
+                    <div><label class="block text-xs font-bold text-gray-600 mb-1">Estoque Inicial / Atual</label><input type="number" id="prod-estoque" class="w-full border p-2 rounded-lg" required></div>
+                </div>
+                <div><label class="block text-xs font-bold text-gray-600 mb-1">Estoque Mínimo</label><input type="number" id="prod-minimo" class="w-full border p-2 rounded-lg" required></div>
+                <div class="flex justify-end space-x-2">
+                    <button type="button" onclick="closeModal('modal-produto')" class="border px-4 py-2 rounded-lg">Cancelar</button>
+                    <button type="submit" class="bg-brand-accent text-white px-4 py-2 rounded-lg font-bold">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modal-pedido" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-4">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 id="modal-pedido-title" class="text-lg font-bold text-brand-dark">Lançar Pedido de Venda</h3>
+                <button type="button" onclick="closeModal('modal-pedido')" class="text-gray-500 text-xl">&times;</button>
+            </div>
+            
+            <form id="form-pedido" onsubmit="savePedidoFinal(event)" class="space-y-4">
+                <input type="hidden" id="pedido-edit-id">
+                
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Nº Pedido</label>
+                        <input type="text" id="ped-numero" class="w-full border p-2 rounded-lg bg-gray-100 font-mono" readonly>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Data</label>
+                        <input type="date" id="ped-data" class="w-full border p-2 rounded-lg" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Condição de Pagamento</label>
+                        <select id="ped-condicao" class="w-full border p-2 rounded-lg font-bold text-orange-700 bg-orange-50">
+                            <option value="Dinheiro / Pix">Dinheiro / Pix</option>
+                            <option value="Cartão de Crédito">Cartão de Crédito (Taxa 3.1%)</option>
+                            <option value="Débito">Débito (Taxa 1.0%)</option>
+                            <option value="Tonetti">Tonetti (Próx. 5º Dia Útil)</option>
+                            <option value="Boleto Faturado">Boleto Faturado</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Selecione o Cliente</label>
+                    <select id="ped-cliente" class="w-full border p-2 rounded-lg" required></select>
+                </div>
+                
+                <div class="p-4 bg-slate-50 rounded-lg border border-slate-300 space-y-2">
+                    <h4 class="text-xs font-bold uppercase text-slate-700"><i class="fa-solid fa-plus-circle mr-1"></i>Adicionar Salgado ao Pedido</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        <div>
+                            <label class="text-[11px] font-bold text-gray-500">Produto</label>
+                            <select id="ped-item-produto" class="w-full border p-1.5 rounded text-sm bg-white"></select>
+                        </div>
+                        <div>
+                            <label class="text-[11px] font-bold text-gray-500">Tipo de Saída</label>
+                            <select id="ped-item-tipo" class="w-full border p-1.5 rounded text-sm bg-white font-semibold">
+                                <option value="ESTOQUE">ESTOQUE (Pronta entrega)</option>
+                                <option value="ENCOMENDA">ENCOMENDA (Mandar p/ Fábrica)</option>
+                            </select>
+                        </div>
+                        <div class="flex space-x-1">
+                            <div class="w-1/2">
+                                <label class="text-[11px] font-bold text-gray-500">Qtd</label>
+                                <input type="number" id="ped-item-qtd" min="1" value="10" class="w-full border p-1.5 rounded text-sm bg-white">
+                            </div>
+                            <div class="w-1/2 flex items-end">
+                                <button type="button" onclick="addItemNoPedidoProvisorio()" class="w-full bg-slate-700 text-white font-bold py-1.5 rounded text-xs hover:bg-slate-800">Incluir</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <span class="text-[11px] font-bold text-slate-500 block mb-1">Lista de Salgados Deste Pedido:</span>
+                        <div class="bg-white rounded border overflow-y-auto max-h-32 text-xs">
+                            <table class="w-full text-left">
+                                <thead class="bg-slate-100 text-[10px]">
+                                    <tr><th class="p-1">Salgado</th><th class="p-1 text-center">Tipo</th><th class="p-1 text-center">Qtd</th><th class="p-1 text-right">Subtotal</th><th class="p-1 text-center">Remover</th></tr>
+                                </thead>
+                                <tbody id="lista-itens-provisorios"></tbody>
+                            </table>
+                        </div>
+                        <div class="text-right font-bold text-sm text-slate-700 mt-2">Total do Pedido: <span id="label-total-pedido">R$ 0,00</span></div>
+                    </div>
+                </div>
+
+                <div class="flex justify-end space-x-2 pt-2 border-t">
+                    <button type="button" onclick="closeModal('modal-pedido')" class="border px-4 py-2 rounded-lg text-gray-600">Cancelar</button>
+                    <button type="submit" class="bg-brand-accent text-white px-6 py-2 rounded-lg font-bold shadow">Salvar / Confirmar Pedido</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURAÇÃO DO SEU FIREBASE CONECTADA CORETAMENTE
+        const firebaseConfig = {
+            apiKey: "AIzaSyCv2gi1BMT7oNVtcbh4_Zb1-KtmUtEIieU",
+            authDomain: "erp-xavier-salgados.firebaseapp.com",
+            projectId: "erp-xavier-salgados",
+            storageBucket: "erp-xavier-salgados.firebasestorage.app",
+            messagingSenderId: "300646961651",
+            appId: "1:300646961651:web:831d5727761e24fc784286"
+        };
+        
+        // Inicializa o Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Arrays locais sincronizados dinamicamente com o banco de dados
+        let clientes = [];
+        let produtos = [];
+        let pedidos = [];
+        let financeiro = [];
+        let contasAPagar = [];
+        let ordensFabrica = [];
+
+        let chartInstance = null;
+        let itensDoPedidoAtual = [];
+
+        function handleLogin(e) { e.preventDefault(); document.getElementById('login-screen').classList.add('hidden'); document.getElementById('main-system').classList.remove('hidden'); initSystem(); }
+        function handleLogout() { document.getElementById('main-system').classList.add('hidden'); document.getElementById('login-screen').classList.remove('hidden'); }
+
+        function switchView(viewName) {
+            const views = ['dashboard', 'clientes', 'produtos', 'pedidos', 'producao', 'compras', 'relatorios', 'estoque'];
+            views.forEach(v => { document.getElementById(`view-${v}`).classList.add('hidden'); document.getElementById(`btn-${v}`).classList.remove('active-menu'); });
+            document.getElementById(`view-${viewName}`).classList.remove('hidden');
+            document.getElementById(`btn-${viewName}`).classList.add('active-menu');
+            
+            if(viewName === 'dashboard') renderDashboard();
+            if(viewName === 'clientes') renderClientes();
+            if(viewName === 'produtos') renderProdutos();
+            if(viewName === 'pedidos') { renderPedidos(); renderFinanceiro(); }
+            if(viewName === 'producao') renderProducao();
+            if(viewName === 'compras') renderContasAPagar();
+            if(viewName === 'relatorios') renderRelatorios();
+            if(viewName === 'estoque') renderEstoque();
+        }
+
+        // Função que sincroniza tudo em tempo real do Firebase antes de iniciar o layout
+        function initSystem() {
+            // Monitora Clientes
+            db.collection("clientes").onSnapshot(snapshot => {
+                clientes = [];
+                snapshot.forEach(doc => { clientes.push({ idfb: doc.id, ...doc.data() }); });
+                renderClientes();
+            });
+
+            // Monitora Produtos
+            db.collection("produtos").onSnapshot(snapshot => {
+                produtos = [];
+                snapshot.forEach(doc => { produtos.push({ idfb: doc.id, ...doc.data() }); });
+                renderProdutos();
+                renderDashboard();
+            });
+
+            // Monitora Pedidos
+            db.collection("pedidos").onSnapshot(snapshot => {
+                pedidos = [];
+                snapshot.forEach(doc => { pedidos.push({ idfb: doc.id, ...doc.data() }); });
+                renderPedidos();
+                renderDashboard();
+            });
+
+            // Monitora Financeiro
+            db.collection("financeiro").onSnapshot(snapshot => {
+                financeiro = [];
+                snapshot.forEach(doc => { financeiro.push({ idfb: doc.id, ...doc.data() }); });
+                renderFinanceiro();
+            });
+
+            // Monitora Contas a Pagar
+            db.collection("contasAPagar").onSnapshot(snapshot => {
+                contasAPagar = [];
+                snapshot.forEach(doc => { contasAPagar.push({ idfb: doc.id, ...doc.data() }); });
+                renderContasAPagar();
+                renderDashboard();
+            });
+
+            // Monitora Ordens de Fábrica
+            db.collection("ordensFabrica").onSnapshot(snapshot => {
+                ordensFabrica = [];
+                snapshot.forEach(doc => { ordensFabrica.push({ idfb: doc.id, ...doc.data() }); });
+                renderProducao();
+            });
+
+            switchView('dashboard');
+        }
+
+        const formatBRL = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
+
+        function calcularQuintoDiaUtil(dataBaseStr) {
+            let dataBase = new Date(dataBaseStr + 'T00:00:00');
+            let ano = dataBase.getFullYear();
+            let mes = dataBase.getMonth() + 1;
+            if (mes > 11) { mes = 0; ano++; }
+            let diasUteis = 0; let dia = 1;
+            while (diasUteis < 5) {
+                let d = new Date(ano, mes, dia);
+                let w = d.getDay();
+                if (w !== 0 && w !== 6) diasUteis++;
+                if (diasUteis < 5) dia++;
+            }
+            let finalDate = new Date(ano, mes, dia);
+            return finalDate.toISOString().split('T')[0].split('-').reverse().join('/');
+        }
+
+        function renderDashboard() {
+            document.getElementById('dash-tot-clientes').innerText = clientes.length;
+            document.getElementById('dash-tot-produtos').innerText = produtos.length;
+            document.getElementById('dash-pedidos-dia').innerText = pedidos.length;
+
+            let faturamentoTotal = 0;
+            let taxasAcumuladas = 0;
+
+            pedidos.forEach(p => {
+                faturamentoTotal += p.total;
+                if(p.condicao === "Cartão de Crédito") {
+                    taxasAcumuladas += (p.total * 0.0310);
+                } else if(p.condicao === "Débito") {
+                    taxasAcumuladas += (p.total * 0.0100);
+                }
+            });
+
+            const custosTotal = contasAPagar.reduce((acc, curr) => acc + curr.valorCusto, 0);
+            const lucroLiquido = faturamentoTotal - custosTotal - taxasAcumuladas;
+
+            document.getElementById('balanco-faturamento').innerText = formatBRL(faturamentoTotal);
+            document.getElementById('balanco-compras').innerText = formatBRL(custosTotal);
+            document.getElementById('balanco-taxas').innerText = formatBRL(taxasAcumuladas);
+            document.getElementById('balanco-lucro').innerText = formatBRL(lucroLiquido);
+
+            const tbody = document.getElementById('dash-estoque-critico'); tbody.innerHTML = '';
+            const criticos = produtos.filter(p => p.estoque < p.minimo);
+            if(criticos.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-2 text-center text-green-600">Nenhum alerta de insumo!</td></tr>`;
+            } else {
+                criticos.forEach(p => {
+                    tbody.innerHTML += `<tr class="border-b"><td class="p-2 font-mono text-xs">${p.codigo}</td><td class="p-2 font-semibold">${p.nome}</td><td class="p-2 text-center text-red-600 font-bold">${p.estoque} un</td><td class="p-2 text-center text-gray-400">${p.minimo} un</td></tr>`;
+                });
+            }
+        }
+
+        // CLIENTES NO FIREBASE
+        function renderClientes() {
+            const query = document.getElementById('search-clientes').value.toLowerCase();
+            const tbody = document.getElementById('table-clientes'); tbody.innerHTML = '';
+            clientes.filter(c => c.nome.toLowerCase().includes(query)).forEach((c, index) => {
+                tbody.innerHTML += `<tr class="border-b bg-white"><td class="p-4 text-xs font-mono">${c.codigo || '-'}</td><td class="p-4 font-bold text-slate-800">${c.nome}</td><td class="p-4 text-gray-600">${c.whatsapp || '-'}</td><td class="p-4 text-gray-600">${c.bairro || '-'}</td><td class="p-4 text-center"><button onclick="editCliente(${index})" class="text-blue-600"><i class="fa-solid fa-pen"></i></button></td></tr>`;
+            });
+        }
+        function openClienteModal() { document.getElementById('form-cliente').reset(); document.getElementById('cliente-idx').value = ""; document.getElementById('modal-cliente').classList.remove('hidden'); }
+        function editCliente(idx) {
+            const c = clientes[idx]; document.getElementById('cliente-idx').value = c.idfb;
+            document.getElementById('cli-nome').value = c.nome; document.getElementById('cli-codigo').value = c.codigo;
+            document.getElementById('cli-whatsapp').value = c.whatsapp; document.getElementById('cli-bairro').value = c.bairro;
+            document.getElementById('cli-pagamento').value = c.pagamento; document.getElementById('modal-cliente').classList.remove('hidden');
+        }
+        function saveCliente(e) {
+            e.preventDefault(); const idfb = document.getElementById('cliente-idx').value;
+            const p = { nome: document.getElementById('cli-nome').value, codigo: document.getElementById('cli-codigo').value, whatsapp: document.getElementById('cli-whatsapp').value, bairro: document.getElementById('cli-bairro').value, pagamento: document.getElementById('cli-pagamento').value };
+            
+            if(idfb === "") {
+                db.collection("clientes").add(p);
+            } else {
+                db.collection("clientes").doc(idfb).set(p);
+            }
+            closeModal('modal-cliente');
+        }
+
+        // PRODUTOS NO FIREBASE
+        function renderProdutos() {
+            const query = document.getElementById('search-produtos').value.toLowerCase();
+            const tbody = document.getElementById('table-produtos'); tbody.innerHTML = '';
+            produtos.filter(p => p.nome.toLowerCase().includes(query)).forEach((p, index) => {
+                tbody.innerHTML += `<tr class="border-b bg-white"><td class="p-4 text-xs font-mono">${p.codigo}</td><td class="p-4 font-bold">${p.nome}</td><td class="p-4 text-red-600 font-semibold">${formatBRL(p.custo)}</td><td class="p-4 text-green-700 font-bold">${formatBRL(p.venda)}</td><td class="p-4 text-center font-bold">${p.estoque} un</td><td class="p-4 text-center"><button onclick="editProduto(${index})" class="text-blue-600"><i class="fa-solid fa-pen"></i></button></td></tr>`;
+            });
+        }
+        function openProdutoModal() { document.getElementById('form-produto').reset(); document.getElementById('produto-idx').value = ""; document.getElementById('modal-produto-title').innerText = "Cadastrar Produto"; document.getElementById('modal-produto').classList.remove('hidden'); }
+        function editProduto(idx) {
+            const p = produtos[idx]; document.getElementById('produto-idx').value = p.idfb;
+            document.getElementById('prod-nome').value = p.nome; document.getElementById('prod-codigo').value = p.codigo;
+            document.getElementById('prod-custo').value = p.custo; document.getElementById('prod-venda').value = p.venda; 
+            document.getElementById('prod-estoque').value = p.estoque; document.getElementById('prod-minimo').value = p.minimo; 
+            document.getElementById('modal-produto-title').innerText = "Editar Produto"; document.getElementById('modal-produto').classList.remove('hidden');
+        }
+        function saveProduto(e) {
+            e.preventDefault(); const idfb = document.getElementById('produto-idx').value;
+            const p = { codigo: document.getElementById('prod-codigo').value, nome: document.getElementById('prod-nome').value, custo: parseFloat(document.getElementById('prod-custo').value), venda: parseFloat(document.getElementById('prod-venda').value), estoque: parseInt(document.getElementById('prod-estoque').value), minimo: parseInt(document.getElementById('prod-minimo').value) };
+            
+            if(idfb === "") {
+                db.collection("produtos").add(p);
+            } else {
+                db.collection("produtos").doc(idfb).set(p);
+            }
+            closeModal('modal-produto');
+        }
+
+        // PEDIDOS NO FIREBASE
+        function renderPedidos() {
+            const tbody = document.getElementById('table-pedidos'); tbody.innerHTML = '';
+            pedidos.forEach((p, idx) => {
+                let txtItens = p.itens.map(i => `${i.qtd}x ${i.produto} (${i.tipoItem})`).join('<br>');
+                
+                let btnEntrega = p.entregue 
+                    ? `<span class="text-green-600 font-bold bg-green-50 px-2 py-1 rounded border border-green-200 block text-center">✓ Entregue</span>` 
+                    : `<button onclick="marcarPedidoEntregue('${p.idfb}')" class="w-full bg-slate-700 hover:bg-slate-800 text-white text-[10px] py-1 px-2 rounded font-bold shadow">Baixar Entrega</button>`;
+                
+                let btnPago = p.pago 
+                    ? `<span class="text-emerald-700 font-bold bg-emerald-50 px-2 py-1 rounded border border-emerald-200 block text-center">✓ Pago</span>` 
+                    : `<button onclick="marcarPedidoPago('${p.idfb}', ${p.id})" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] py-1 px-2 rounded font-bold shadow">Baixar Pago</button>`;
+
+                tbody.innerHTML += `
+                    <tr class="border-b bg-white hover:bg-slate-50 text-xs">
+                        <td class="p-4 font-mono font-bold">#${p.numero}</td>
+                        <td class="p-4"><strong>${p.cliente}</strong><br><span class="text-gray-400 text-[10px]">${p.data}</span><br><span class="text-orange-600 font-bold text-[9px]">${p.condicao}</span></td>
+                        <td class="p-4 text-slate-600">${txtItens}</td>
+                        <td class="p-4 text-right font-bold text-slate-900 text-sm">${formatBRL(p.total)}</td>
+                        <td class="p-4 text-center">${btnEntrega}</td>
+                        <td class="p-4 text-center">${btnPago}</td>
+                        <td class="p-4 text-center">
+                            <button onclick="editPedidoExistente(${idx})" class="text-blue-600 hover:text-blue-800 font-bold"><i class="fa-solid fa-pen-to-square mr-1"></i>Editar</button>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        function marcarPedidoEntregue(idfb) {
+            db.collection("pedidos").doc(idfb).update({ entregue: true });
+        }
+
+        function marcarPedidoPago(idfb, id) {
+            db.collection("pedidos").doc(idfb).update({ pago: true });
+            const fin = financeiro.find(f => f.pedidoId === id);
+            if(fin) db.collection("financeiro").doc(fin.idfb).update({ status: 'Pago' });
+        }
+
+        function openPedidoModal() {
+            document.getElementById('form-pedido').reset();
+            document.getElementById('pedido-edit-id').value = "";
+            document.getElementById('ped-numero').value = pedidos.length > 0 ? pedidos[pedidos.length - 1].numero + 1 : 1001;
+            document.getElementById('ped-data').value = new Date().toISOString().split('T')[0];
+            itensDoPedidoAtual = [];
+            
+            const cliSel = document.getElementById('ped-cliente'); cliSel.innerHTML = '';
+            clientes.forEach(c => cliSel.innerHTML += `<option value="${c.nome}">${c.nome}</option>`);
+            
+            const prodSel = document.getElementById('ped-item-produto'); prodSel.innerHTML = '';
+            produtos.forEach(p => prodSel.innerHTML += `<option value="${p.nome}">${p.nome} (${formatBRL(p.venda)})</option>`);
+            
+            renderItensProvisoriosNoModal();
+            document.getElementById('modal-pedido-title').innerText = "Lançar Pedido de Venda";
+            document.getElementById('modal-pedido').classList.remove('hidden');
+        }
+
+        function addItemNoPedidoProvisorio() {
+            const prodNome = document.getElementById('ped-item-produto').value;
+            const tipoItem = document.getElementById('ped-item-tipo').value;
+            const qtd = parseInt(document.getElementById('ped-item-qtd').value);
+            const pRef = produtos.find(p => p.nome === prodNome);
+            const subtotal = pRef.venda * qtd;
+
+            itensDoPedidoAtual.push({ produto: prodNome, tipoItem: tipoItem, qtd: qtd, unitario: pRef.venda, subtotal: subtotal, recebidoDaFabrica: false });
+            renderItensProvisoriosNoModal();
+        }
+
+        function removerItemProvisorio(idx) { itensDoPedidoAtual.splice(idx, 1); renderItensProvisoriosNoModal(); }
+
+        function renderItensProvisoriosNoModal() {
+            const tbody = document.getElementById('lista-itens-provisorios'); tbody.innerHTML = '';
+            let acumulado = 0;
+            itensDoPedidoAtual.forEach((i, idx) => {
+                acumulado += i.subtotal;
+                tbody.innerHTML += `<tr><td class="p-1 font-medium">${i.produto}</td><td class="p-1 text-center"><span class="px-1 text-[9px] font-bold rounded ${i.tipoItem==='ESTOQUE'?'bg-blue-100':'bg-amber-100'}">${i.tipoItem}</span></td><td class="p-1 text-center">${i.qtd}</td><td class="p-1 text-right">${formatBRL(i.subtotal)}</td><td class="p-1 text-center"><button type="button" onclick="removerItemProvisorio(${idx})" class="text-red-500"><i class="fa-solid fa-times"></i></button></td></tr>`;
+            });
+            document.getElementById('label-total-pedido').innerText = formatBRL(acumulado);
+        }
+
+        function editPedidoExistente(idx) {
+            const p = pedidos[idx];
+            if(!p) return;
+            document.getElementById('pedido-edit-id').value = p.idfb;
+            document.getElementById('ped-numero').value = p.numero;
+            document.getElementById('ped-data').value = p.data;
+            document.getElementById('ped-condicao').value = p.condicao;
+
+            const cliSel = document.getElementById('ped-cliente'); cliSel.innerHTML = '';
+            clientes.forEach(c => { let sel = c.nome === p.cliente ? 'selected' : ''; cliSel.innerHTML += `<option value="${c.nome}" ${sel}>${c.nome}</option>`; });
+
+            const prodSel = document.getElementById('ped-item-produto'); prodSel.innerHTML = '';
+            produtos.forEach(prod => prodSel.innerHTML += `<option value="${prod.nome}">${prod.nome}</option>`);
+
+            itensDoPedidoAtual = JSON.parse(JSON.stringify(p.itens));
+            renderItensProvisoriosNoModal();
+            document.getElementById('modal-pedido-title').innerText = "Alteração de Pedido de Venda";
+            document.getElementById('modal-pedido').classList.remove('hidden');
+        }
+
+        function savePedidoFinal(e) {
+            e.preventDefault();
+            if(itensDoPedidoAtual.length === 0) { alert("Inclua itens!"); return; }
+
+            const idfb = document.getElementById('pedido-edit-id').value;
+            const clienteSelecionado = document.getElementById('ped-cliente').value;
+            const condicaoPgto = document.getElementById('ped-condicao').value;
+            const dataPedido = document.getElementById('ped-data').value;
+            const totalPedido = itensDoPedidoAtual.reduce((acc, curr) => acc + curr.subtotal, 0);
+            const nPedido = parseInt(document.getElementById('ped-numero').value);
+
+            // Reverte estoque antigo em caso de edição
+            if(idfb !== "") {
+                const oldPed = pedidos.find(x => x.idfb === idfb);
+                if(oldPed) {
+                    oldPed.itens.forEach(oldItem => {
+                        if(oldItem.tipoItem === 'ESTOQUE') {
+                            const prodRef = produtos.find(p => p.nome === oldItem.produto);
+                            if(prodRef) {
+                                prodRef.estoque += oldItem.qtd;
+                                db.collection("produtos").doc(prodRef.idfb).update({ estoque: prodRef.estoque });
+                            }
+                        }
+                    });
+                    
+                    // Limpa registros vinculados antigos no Firebase para reescrevê-los
+                    financeiro.filter(f => f.pedidoId === oldPed.id).forEach(f => db.collection("financeiro").doc(f.idfb).delete());
+                    contasAPagar.filter(c => c.pedidoId === oldPed.id).forEach(c => db.collection("contasAPagar").doc(c.idfb).delete());
+                }
+            }
+
+            // Abate itens do estoque instantaneamente se for do tipo ESTOQUE
+            itensDoPedidoAtual.forEach(item => {
+                if(item.tipoItem === 'ESTOQUE') {
+                    const prodRef = produtos.find(p => p.nome === item.produto);
+                    if(prodRef) {
+                        prodRef.estoque -= item.qtd;
+                        db.collection("produtos").doc(prodRef.idfb).update({ estoque: prodRef.estoque });
+                    }
+                }
+            });
+
+            let idFinal = idfb === "" ? (pedidos.length > 0 ? pedidos[pedidos.length - 1].id + 1 : 1) : pedidos.find(x=>x.idfb===idfb).id;
+            
+            const novoObjetoPedido = {
+                id: idFinal,
+                numero: nPedido,
+                data: dataPedido,
+                cliente: clienteSelecionado,
+                condicao: condicaoPgto,
+                total: totalPedido,
+                entregue: idfb !== "" ? pedidos.find(x=>x.idfb===idfb).entregue : false,
+                pago: idfb !== "" ? pedidos.find(x=>x.idfb===idfb).pago : false,
+                itens: JSON.parse(JSON.stringify(itensDoPedidoAtual))
+            };
+
+            if(idfb === "") {
+                db.collection("pedidos").add(novoObjetoPedido);
+            } else {
+                db.collection("pedidos").doc(idfb).set(novoObjetoPedido);
+            }
+
+            // Injeta as encomendas na fila ativa de Ordens de Fábrica
+            itensDoPedidoAtual.forEach(item => {
+                if(item.tipoItem === 'ENCOMENDA') {
+                    const pRef = produtos.find(p => p.nome === item.produto);
+                    if(pRef) {
+                        let cTotal = pRef.custo * item.qtd;
+                        let numOF = ordensFabrica.length > 0 ? ordensFabrica[ordensFabrica.length - 1].numeroOrdem + 1 : 1001;
+                        let ofId = ordensFabrica.length > 0 ? ordensFabrica[ordensFabrica.length - 1].id + 1 : 1;
+                        
+                        db.collection("ordensFabrica").add({
+                            id: ofId,
+                            numeroOrdem: numOF,
+                            data: dataPedido,
+                            tipo: 'ENCOMENDA',
+                            produto: item.produto,
+                            qtd: item.qtd,
+                            custoTotal: cTotal,
+                            status: 'Pendente',
+                            pedidoId: idFinal
+                        });
+
+                        db.collection("contasAPagar").add({
+                            id: contasAPagar.length > 0 ? contasAPagar[contasAPagar.length - 1].id + 1 : 1,
+                            pedidoId: idFinal,
+                            tipo: 'ENCOMENDA',
+                            ref: `Ordem de Fábrica #${numOF}`,
+                            valorCusto: cTotal,
+                            status: 'Pendente'
+                        });
+                    }
+                }
+            });
+
+            if(condicaoPgto === 'Tonetti') {
+                db.collection("financeiro").add({
+                    id: financeiro.length > 0 ? financeiro[financeiro.length - 1].id + 1 : 1,
+                    pedidoId: idFinal,
+                    cliente: clienteSelecionado,
+                    vencimento: calcularQuintoDiaUtil(dataPedido),
+                    valor: totalPedido,
+                    status: novoObjetoPedido.pago ? 'Pago' : 'Pendente'
+                });
+            }
+
+            closeModal('modal-pedido');
+            switchView('pedidos');
+        }
+
+        // FINANCEIRO NO FIREBASE
+        function renderFinanceiro() {
+            const tbody = document.getElementById('table-financeiro'); tbody.innerHTML = '';
+            if(financeiro.length === 0) { tbody.innerHTML = `<tr><td colspan="6" class="p-3 text-center text-gray-400 text-xs">Nenhum título pendente.</td></tr>`; return; }
+            financeiro.forEach(f => {
+                const isPago = f.status === 'Pago';
+                tbody.innerHTML += `
+                    <tr class="border-b bg-white text-xs ${isPago ? 'opacity-60' : ''}">
+                        <td class="p-3 font-mono font-bold">#${pedidos.find(p => p.id === f.pedidoId)?.numero || f.pedidoId}</td>
+                        <td class="p-3 font-semibold">${f.cliente}</td>
+                        <td class="p-3 font-bold text-slate-600">${f.vencimento}</td>
+                        <td class="p-3 text-right font-black text-slate-800">${formatBRL(f.valor)}</td>
+                        <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isPago?'bg-green-100 text-green-800':'bg-red-100 text-red-800'}">${f.status}</span></td>
+                        <td class="p-3 text-center">${isPago ? `<span class="text-green-600 font-bold">✓ Recebido</span>` : `<button onclick="darBaixaTitulo('${f.idfb}', ${f.pedidoId})" class="bg-emerald-600 text-white font-bold px-2 py-1 rounded text-[10px] shadow">Informar Pagamento</button>`}</td>
+                    </tr>`;
+            });
+        }
+        
+        function darBaixaTitulo(idfb, pedidoId) { 
+            db.collection("financeiro").doc(idfb).update({ status: 'Pago' });
+            const p = pedidos.find(x => x.id === pedidoId);
+            if(p) db.collection("pedidos").doc(p.idfb).update({ pago: true });
+        }
+
+        // PRODUÇÃO NO FIREBASE
+        function renderProducao() {
+            const prodSel = document.getElementById('of-produto'); prodSel.innerHTML = '';
+            produtos.forEach(p => prodSel.innerHTML += `<option value="${p.nome}">${p.nome}</option>`);
+
+            const tbody = document.getElementById('table-producao'); tbody.innerHTML = '';
+            if(ordensFabrica.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-gray-400 text-xs">Nenhuma ordem ativa na fábrica.</td></tr>`;
+                return;
+            }
+
+            ordensFabrica.forEach(o => {
+                const isFinalizado = o.status === "Recebido";
+                tbody.innerHTML += `
+                    <tr class="border-b bg-white text-xs ${isFinalizado ? 'opacity-60 bg-gray-50' : ''}">
+                        <td class="p-4 font-mono font-bold">#${o.numeroOrdem}</td>
+                        <td class="p-4 text-gray-500">${o.data}</td>
+                        <td class="p-4"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${o.tipo==='ENCOMENDA'?'bg-amber-100 text-amber-800':'bg-blue-100 text-blue-800'}">${o.tipo}</span></td>
+                        <td class="p-4 font-semibold text-slate-800">${o.produto}</td>
+                        <td class="p-4 text-center font-bold">${o.qtd} un</td>
+                        <td class="p-4 text-right font-bold text-slate-700">${formatBRL(o.custoTotal)}</td>
+                        <td class="p-4 text-center">
+                            ${isFinalizado 
+                                ? `<span class="text-green-600 font-bold">✓ Estoque Alimentado</span>`
+                                : `<button onclick="baixarEntregaFabrica('${o.idfb}')" class="bg-orange-500 hover:bg-orange-600 text-white font-bold px-2 py-1 rounded text-[10px] shadow">Baixar Entrega</button>`
+                            }
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        function baixarEntregaFabrica(idfb) {
+            const o = ordensFabrica.find(x => x.idfb === idfb);
+            if(!o) return;
+
+            const pRef = produtos.find(p => p.nome === o.produto);
+            if(!pRef) return;
+
+            if(o.tipo === "ENCOMENDA") {
+                pRef.estoque -= o.qtd;
+                const pedRef = pedidos.find(p => p.id === o.pedidoId);
+                if(pedRef) {
+                    pedRef.itens.forEach(i => { if(i.produto === o.produto) i.recebidoDaFabrica = true; });
+                    db.collection("pedidos").doc(pedRef.idfb).update({ itens: pedRef.itens });
+                }
+            } else if(o.tipo === "REPOSICAO") {
+                pRef.estoque += o.qtd;
+            }
+
+            db.collection("produtos").doc(pRef.idfb).update({ estoque: pRef.estoque });
+            db.collection("ordensFabrica").doc(idfb).update({ status: "Recebido" });
+            alert(`Entrega processada!`);
+        }
+
+        function gerarPlanilhaOrdemFabrica() {
+            const tipo = document.getElementById('of-tipo').value;
+            const prodNome = document.getElementById('of-produto').value;
+            const qtd = parseInt(document.getElementById('of-qtd').value);
+
+            const pRef = produtos.find(p => p.nome === prodNome);
+            if(!pRef) return;
+
+            const cTotal = pRef.custo * qtd;
+            const dataAtual = new Date().toISOString().split('T')[0];
+            const numOF = ordensFabrica.length > 0 ? ordensFabrica[ordensFabrica.length - 1].numeroOrdem + 1 : 1001;
+            const ofId = ordensFabrica.length > 0 ? ordensFabrica[ordensFabrica.length - 1].id + 1 : 1;
+
+            db.collection("ordensFabrica").add({
+                id: ofId,
+                numeroOrdem: numOF,
+                data: dataAtual,
+                tipo: tipo,
+                produto: prodNome,
+                qtd: qtd,
+                custoTotal: cTotal,
+                status: 'Pendente',
+                pedidoId: null
+            });
+
+            db.collection("contasAPagar").add({
+                id: contasAPagar.length > 0 ? contasAPagar[contasAPagar.length - 1].id + 1 : 1,
+                pedidoId: null,
+                tipo: tipo,
+                ref: `Ordem de Fábrica #${numOF} (${tipo})`,
+                valorCusto: cTotal,
+                status: 'Pendente'
+            });
+
+            let csv = "data:text/csv;charset=utf-8,\uFEFF";
+            csv += "Numero do Pedido;Data de Solicitacao;Descricao do Item;Quantidade Solicitado;Valor Unitario;Valor Total\n";
+            csv += `${numOF};${dataAtual};${prodNome};${qtd};${pRef.custo.toFixed(2)};${cTotal.toFixed(2)}\n`;
+            csv += `;;;;VALOR TOTAL DO PEDIDO;${cTotal.toFixed(2)}\n`;
+
+            const encodedUri = encodeURI(csv);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Ordem_Fabrica_#${numOF}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // CONTAS A PAGAR NO FIREBASE
+        function renderContasAPagar() {
+            const tbody = document.getElementById('table-contas-pagar'); tbody.innerHTML = '';
+            if(contasAPagar.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400 text-xs">Nenhuma pendência.</td></tr>`; return; }
+            contasAPagar.forEach(c => {
+                const isPago = c.status === 'Pago';
+                tbody.innerHTML += `
+                    <tr class="border-b text-xs bg-white ${isPago ? 'opacity-60' : ''}">
+                        <td class="p-4 font-mono font-bold">${c.ref}</td>
+                        <td class="p-4 text-gray-500 font-bold">${c.tipo}</td>
+                        <td class="p-4 text-right font-black text-red-600">${formatBRL(c.valorCusto)}</td>
+                        <td class="p-4 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isPago ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}">${c.status}</span></td>
+                        <td class="p-4 text-center">
+                            ${isPago ? `<span class="text-green-600 font-bold">✓ Custo Pago</span>` : `<button onclick="darBaixaCompra('${c.idfb}')" class="bg-slate-700 text-white font-bold px-2 py-1 rounded text-[10px]">Dar Baixa (Pago)</button>`}
+                        </td>
+                    </tr>`;
+            });
+        }
+        function darBaixaCompra(idfb) { db.collection("contasAPagar").doc(idfb).update({ status: 'Pago' }); }
+
+        // RELATÓRIOS
+        function renderRelatorios() {
+            const rankingProdutos = {};
+            produtos.forEach(p => rankingProdutos[p.nome] = 0);
+            pedidos.forEach(p => { p.itens.forEach(i => { if(rankingProdutos[i.produto] !== undefined) rankingProdutos[i.produto] += i.qtd; }); });
+
+            const tProd = document.getElementById('report-mais-vendidos'); tProd.innerHTML = '';
+            Object.keys(rankingProdutos).sort((a,b) => rankingProdutos[b] - rankingProdutos[a]).forEach(name => {
+                tProd.innerHTML += `<tr class="border-b bg-white"><td class="p-2 font-semibold">${name}</td><td class="p-2 text-center font-bold text-orange-600">${rankingProdutos[name]} un</td></tr>`;
+            });
+
+            const rankingClientes = {};
+            clientes.forEach(c => rankingClientes[c.nome] = 0);
+            pedidos.forEach(p => { if(rankingClientes[p.cliente] !== undefined) rankingClientes[p.cliente] += p.total; });
+
+            const tCli = document.getElementById('report-clientes-mes'); tCli.innerHTML = '';
+            Object.keys(rankingClientes).sort((a,b) => rankingClientes[b] - rankingClientes[a]).forEach(name => {
+                tCli.innerHTML += `<tr class="border-b bg-white"><td class="p-2 font-semibold">${name}</td><td class="p-2 text-right font-black text-slate-700">${formatBRL(rankingClientes[name])}</td></tr>`;
+            });
+
+            const ctx = document.getElementById('graficoVendasMes').getContext('2d');
+            if (chartInstance) { chartInstance.destroy(); }
+
+            const faturamentoJulho = pedidos.reduce((acc,curr) => acc + curr.total, 0);
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Maio', 'Junho', 'Julho (Atual)'],
+                    datasets: [{
+                        label: 'Variação Bruta de Faturamento (R$)',
+                        data: [15400, 18900, faturamentoJulho],
+                        borderColor: '#f97316',
+                        backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        // ESTOQUE
+        function renderEstoque() {
+            const tbody = document.getElementById('table-estoque'); tbody.innerHTML = '';
+            produtos.forEach(p => {
+                const baixo = p.estoque < p.minimo;
+                tbody.innerHTML += `<tr class="border-b ${baixo?'bg-red-50':''}"><td class="p-4 font-mono text-xs">${p.codigo}</td><td class="p-4 font-bold">${p.nome}</td><td class="p-4 text-center font-bold">${p.estoque} un</td><td class="p-4 text-center text-gray-400">${p.minimo} un</td><td class="p-4 text-center">${baixo?'<span class="bg-red-600 text-white text-[10px] px-2 py-0.5 rounded font-bold">ALERTA ESTOQUE</span>':'<span class="bg-green-600 text-white text-[10px] px-2 py-0.5 rounded font-bold">Estável</span>'}</td></tr>`;
+            });
+        }
+
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+    </script>
+</body>
+</html>
