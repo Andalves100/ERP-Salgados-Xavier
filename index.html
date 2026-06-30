@@ -6,6 +6,7 @@
     <title>ERP Xavier Salgados</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -31,7 +32,6 @@
 </head>
 <body class="bg-gray-100 font-sans text-gray-800">
 
-    <!-- TELA DE LOGIN -->
     <div id="login-screen" class="min-h-screen flex items-center justify-center bg-brand-dark p-4">
         <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md">
             <div class="text-center mb-8">
@@ -67,16 +67,14 @@
         </div>
     </div>
 
-    <!-- ESTRUTURA PRINCIPAL -->
     <div id="main-system" class="hidden min-h-screen flex flex-col md:flex-row">
         
-        <!-- MENU LATERAL -->
         <aside class="w-full md:w-64 bg-brand-nav text-white flex flex-col shadow-xl z-20">
             <div class="p-5 bg-brand-dark flex items-center justify-between">
                 <div class="flex items-center space-x-3">
                     <span class="font-bold text-lg tracking-wider text-orange-500">XAVIER ERP</span>
                 </div>
-                <span class="bg-brand-accent text-xs px-2 py-0.5 rounded font-mono">v1.3</span>
+                <span class="bg-brand-accent text-xs px-2 py-0.5 rounded font-mono">v1.4</span>
             </div>
             <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
                 <button onclick="switchView('dashboard')" id="btn-dashboard" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-slate-700 transition active-menu">
@@ -97,6 +95,9 @@
                 <button onclick="switchView('compras')" id="btn-compras" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-slate-700 transition">
                     <i class="fa-solid fa-wallet w-5"></i> <span>Contas a Pagar (Fábrica)</span>
                 </button>
+                <button onclick="switchView('relatorios')" id="btn-relatorios" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-slate-700 transition">
+                    <i class="fa-solid fa-chart-line w-5"></i> <span>Relatórios & Gráficos</span>
+                </button>
                 <button onclick="switchView('estoque')" id="btn-estoque" class="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-slate-700 transition">
                     <i class="fa-solid fa-warehouse w-5"></i> <span>Estoque</span>
                 </button>
@@ -107,7 +108,6 @@
             </div>
         </aside>
 
-        <!-- CONTEÚDO -->
         <main class="flex-1 flex flex-col overflow-x-hidden">
             <header class="bg-white shadow px-6 py-4 flex justify-between items-center">
                 <h2 id="page-title" class="text-xl font-bold text-brand-dark">Dashboard & Balanço Geral</h2>
@@ -116,7 +116,6 @@
 
             <div class="p-6 flex-1">
                 
-                <!-- SEÇÃO: DASHBOARD -->
                 <section id="view-dashboard" class="space-y-6">
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-500 flex items-center justify-between">
@@ -133,24 +132,24 @@
                         </div>
                     </div>
 
-                    <!-- BALANÇO FINANCEIRO -->
                     <div class="bg-slate-900 text-white p-6 rounded-2xl shadow-lg">
-                        <h4 class="text-orange-500 font-bold uppercase tracking-wider text-xs mb-4"><i class="fa-solid fa-scale-balanced mr-2"></i>Balanço Financeiro Simplificado (Mês Corrente)</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 divide-y md:divide-y-0 md:divide-x divide-slate-700">
-                            <div class="pt-4 md:pt-0">
-                                <span class="text-gray-400 text-sm block">Faturamento Bruto (A)</span>
-                                <span id="balanco-faturamento" class="text-2xl font-black text-green-400">R$ 0,00</span>
-                                <p class="text-[11px] text-gray-500 mt-1">Total acumulado de pedidos de venda vendidos.</p>
+                        <h4 class="text-orange-500 font-bold uppercase tracking-wider text-xs mb-4"><i class="fa-solid fa-scale-balanced mr-2"></i>Balanço Financeiro (Faturamento - Compras - Taxas = Lucro Líquido)</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 divide-y md:divide-y-0 md:divide-x divide-slate-700">
+                            <div>
+                                <span class="text-gray-400 text-xs block">Faturamento Bruto</span>
+                                <span id="balanco-faturamento" class="text-xl font-black text-green-400">R$ 0,00</span>
                             </div>
-                            <div class="pt-4 md:pt-0 md:pl-6">
-                                <span class="text-gray-400 text-sm block">Custo de Compras / Fábrica (B)</span>
-                                <span id="balanco-compras" class="text-2xl font-black text-red-400">R$ 0,00</span>
-                                <p class="text-[11px] text-gray-500 mt-1">Total de insumos e encomendas gerados para a fábrica.</p>
+                            <div class="md:pl-4">
+                                <span class="text-gray-400 text-xs block">Custo Fábrica / Compras</span>
+                                <span id="balanco-compras" class="text-xl font-black text-red-400">R$ 0,00</span>
                             </div>
-                            <div class="pt-4 md:pt-0 md:pl-6">
-                                <span class="text-orange-400 text-sm block font-bold">LUCRO REAL DO MÊS (A - B)</span>
-                                <span id="balanco-lucro" class="text-3xl font-black text-white">R$ 0,00</span>
-                                <p class="text-[11px] text-gray-400 mt-1">Margem operacional líquida antes das despesas fixas.</p>
+                            <div class="md:pl-4">
+                                <span class="text-gray-400 text-xs block">Taxas Adquirentes (Cartões)</span>
+                                <span id="balanco-taxas" class="text-xl font-black text-amber-500">R$ 0,00</span>
+                            </div>
+                            <div class="md:pl-4">
+                                <span class="text-orange-400 text-xs block font-bold">LUCRO REAL LÍQUIDO</span>
+                                <span id="balanco-lucro" class="text-2xl font-black text-white">R$ 0,00</span>
                             </div>
                         </div>
                     </div>
@@ -168,7 +167,6 @@
                     </div>
                 </section>
 
-                <!-- SEÇÃO: CLIENTES -->
                 <section id="view-clientes" class="hidden space-y-4">
                     <div class="flex justify-between items-center">
                         <input type="text" id="search-clientes" oninput="renderClientes()" placeholder="Pesquisar por nome..." class="border p-2 rounded-lg w-72">
@@ -184,7 +182,6 @@
                     </div>
                 </section>
 
-                <!-- SEÇÃO: PRODUTOS -->
                 <section id="view-produtos" class="hidden space-y-4">
                     <div class="flex justify-between items-center">
                         <input type="text" id="search-produtos" oninput="renderProdutos()" placeholder="Pesquisar salgados..." class="border p-2 rounded-lg w-72">
@@ -200,7 +197,6 @@
                     </div>
                 </section>
 
-                <!-- SEÇÃO: PEDIDOS DE VENDA -->
                 <section id="view-pedidos" class="hidden space-y-6">
                     <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
                         <div class="flex justify-between items-center mb-4">
@@ -225,7 +221,6 @@
                         </div>
                     </div>
 
-                    <!-- CONTAS A RECEBER -->
                     <div class="bg-white p-4 rounded-xl shadow-sm border border-green-200">
                         <h3 class="text-lg font-bold text-green-800 mb-2"><i class="fa-solid fa-comments-dollar mr-2"></i>Contas a Receber (Clientes Tonetti)</h3>
                         <p class="text-xs text-gray-500 mb-4">Abaixo encontram-se as parcelas faturadas para recebimento no próximo 5º dia útil.</p>
@@ -240,23 +235,48 @@
                     </div>
                 </section>
 
-                <!-- SEÇÃO: PRODUÇÃO & INTEGRAÇÃO WHATSAPP -->
                 <section id="view-producao" class="hidden space-y-4">
+                    <div class="bg-white p-6 rounded-xl shadow border border-slate-200 space-y-4">
+                        <h3 class="text-md font-bold text-slate-800 uppercase tracking-wider"><i class="fa-solid fa-boxes-packing mr-2 text-brand-accent"></i>Disparar Nova Ordem de Reposição ou Encomenda</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 bg-slate-50 p-4 rounded-lg">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Tipo da Ordem</label>
+                                <select id="of-tipo" class="w-full border p-2 rounded bg-white text-sm font-bold">
+                                    <option value="ENCOMENDA">ATENDER ENCOMENDAS (Clientes)</option>
+                                    <option value="REPOSICAO">REPOSIÇÃO DE ESTOQUE (Saldo Geral)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Selecione o Salgado</label>
+                                <select id="of-produto" class="w-full border p-2 rounded bg-white text-sm"></select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-1">Quantidade</label>
+                                <input type="number" id="of-qtd" min="1" value="100" class="w-full border p-2 rounded bg-white text-sm">
+                            </div>
+                            <div class="flex items-end">
+                                <button onclick="gerarPlanilhaOrdemFabrica()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 px-3 rounded text-xs flex items-center justify-center shadow">
+                                    <i class="fa-solid fa-file-excel mr-2 text-emerald-400"></i> Baixar Planilha (.CSV)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="p-4 bg-orange-50 border border-orange-200 text-orange-800 rounded-lg text-sm flex justify-between items-center">
                         <div>
-                            <i class="fa-solid fa-circle-info mr-1"></i> <strong>Central de Encomendas à Fábrica:</strong> Ao receber fisicamente as mercadorias encomendadas da fábrica, clique no botão de recebimento para **acrescentar as unidades ao seu estoque**.
+                            <i class="fa-solid fa-circle-info mr-1"></i> <strong>Fila Ativa de Ordens Enviadas:</strong> Ao clicar em <strong>Baixar Entrega</strong>, o sistema fará a dedução dos saldos vinculados se for encomenda ou somará o saldo se for reposição.
                         </div>
-                        <button onclick="dispararWhatsappGeral()" class="bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-1.5 rounded text-xs flex items-center shadow">
-                            <i class="fa-brands fa-whatsapp text-sm mr-1.5"></i> Enviar Lista Geral à Fábrica
-                        </button>
                     </div>
                     <div class="bg-white rounded-xl shadow-sm overflow-x-auto">
                         <table class="w-full text-left text-sm">
                             <thead class="bg-slate-100 text-gray-700">
                                 <tr>
-                                    <th class="p-4">Produto Encomendado</th>
-                                    <th class="p-4 text-center">Quantidade Pendente</th>
-                                    <th class="p-4 text-right">Custo Estimado</th>
+                                    <th class="p-4">Nº da Ordem</th>
+                                    <th class="p-4">Data Solicitação</th>
+                                    <th class="p-4">Tipo Ordem</th>
+                                    <th class="p-4">Item / Detalhes</th>
+                                    <th class="p-4 text-center">Quantidade</th>
+                                    <th class="p-4 text-right">Custo Total</th>
                                     <th class="p-4 text-center">Ação Interativa</th>
                                 </tr>
                             </thead>
@@ -265,17 +285,16 @@
                     </div>
                 </section>
 
-                <!-- SEÇÃO: CONTAS A PAGAR -->
                 <section id="view-compras" class="hidden space-y-4">
                     <div class="p-4 bg-red-50 border border-red-200 text-red-800 rounded-lg text-sm">
-                        <i class="fa-solid fa-wallet mr-1"></i> <strong>Contas a Pagar (Fábrica):</strong> Toda encomenda gera automaticamente uma obrigação financeira baseada no preço de custo do produto. Dê a baixa assim que efetuar o pagamento do pedido.
+                        <i class="fa-solid fa-wallet mr-1"></i> <strong>Contas a Pagar (Fábrica):</strong> Toda encomenda ou reposição gerada cria uma pendência de custo nesta aba. Clique para dar baixa após liquidar o saldo com a fábrica.
                     </div>
                     <div class="bg-white rounded-xl shadow-sm overflow-x-auto">
                         <table class="w-full text-left text-sm">
                             <thead class="bg-slate-900 text-white">
                                 <tr>
                                     <th class="p-4">Ordem / Pedido Origem</th>
-                                    <th class="p-4">Cliente Referência</th>
+                                    <th class="p-4">Tipo da Operação</th>
                                     <th class="p-4 text-right">Valor do Custo (A Pagar)</th>
                                     <th class="p-4 text-center">Status Pagamento</th>
                                     <th class="p-4 text-center">Ações</th>
@@ -286,7 +305,44 @@
                     </div>
                 </section>
 
-                <!-- SEÇÃO: ESTOQUE -->
+                <section id="view-relatorios" class="hidden space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white p-5 rounded-xl shadow border">
+                            <h3 class="text-sm font-bold uppercase text-slate-700 mb-3"><i class="fa-solid fa-fire text-orange-500 mr-2"></i>Salgados Mais Vendidos (Manter Estoque Maior)</h3>
+                            <div class="overflow-y-auto max-h-64">
+                                <table class="w-full text-left text-xs">
+                                    <thead class="bg-slate-50">
+                                        <tr><th class="p-2">Produto</th><th class="p-2 text-center">Qtd Total Vendida</th></tr>
+                                    </thead>
+                                    <tbody id="report-mais-vendidos"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-xl shadow border">
+                            <h3 class="text-sm font-bold uppercase text-slate-700 mb-3"><i class="fa-solid fa-user-tag text-blue-500 mr-2"></i>Ranking de Faturamento Mensal por Cliente</h3>
+                            <div class="overflow-y-auto max-h-64">
+                                <table class="w-full text-left text-xs">
+                                    <thead class="bg-slate-50">
+                                        <tr><th class="p-2">Nome do Cliente</th><th class="p-2 text-right">Total Comprado (R$)</th></tr>
+                                    </thead>
+                                    <tbody id="report-clientes-mes"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow border">
+                        <h3 class="text-sm font-bold uppercase text-slate-700 mb-2"><i class="fa-solid fa-chart-area text-indigo-500 mr-2"></i>Variação e Crescimento de Vendas Mês a Mês</h3>
+                        <p class="text-xs text-gray-500 mb-4">Análise visual para detecção de sazonalidade e metas comerciais de crescimento.</p>
+                        <div class="w-full flex justify-center">
+                            <div class="w-full max-w-4xl h-64 relative">
+                                <canvas id="graficoVendasMes"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 <section id="view-estoque" class="hidden space-y-4">
                     <div class="bg-white rounded-xl shadow-sm overflow-x-auto">
                         <table class="w-full text-left text-sm">
@@ -302,7 +358,6 @@
         </main>
     </div>
 
-    <!-- MODAL: CLIENTE -->
     <div id="modal-cliente" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl max-w-xl w-full p-6 space-y-4">
             <h3 class="text-lg font-bold text-brand-dark">Cadastrar Cliente</h3>
@@ -310,7 +365,7 @@
                 <input type="hidden" id="cliente-idx">
                 <div>
                     <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Nome do Cliente <span class="text-red-500">*Obrigatório</span></label>
-                    <input type="text" id="cli-nome" class="w-full border p-2 rounded-lg" required placeholder="Digite o nome ou razão social">
+                    <input type="text" id="cli-nome" class="w-full border p-2 rounded-lg" required placeholder="Digite o nome do cliente">
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div><label class="block text-xs text-gray-500 mb-1">Código (Opcional)</label><input type="text" id="cli-codigo" class="w-full border p-2 rounded-lg"></div>
@@ -318,7 +373,7 @@
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div><label class="block text-xs text-gray-500 mb-1">Bairro (Opcional)</label><input type="text" id="cli-bairro" class="w-full border p-2 rounded-lg"></div>
-                    <div><label class="block text-xs text-gray-500 mb-1">Forma de Pagamento Padrão</label><select id="cli-pagamento" class="w-full border p-2 rounded-lg"><option>Dinheiro / Pix</option><option>Tonetti</option><option>Boleto Faturado</option></select></div>
+                    <div><label class="block text-xs text-gray-500 mb-1">Forma de Pagamento Padrão</label><select id="cli-pagamento" class="w-full border p-2 rounded-lg"><option>Dinheiro / Pix</option><option>Cartão de Crédito</option><option>Débito</option><option>Tonetti</option><option>Boleto Faturado</option></select></div>
                 </div>
                 <div class="flex justify-end space-x-2">
                     <button type="button" onclick="closeModal('modal-cliente')" class="border px-4 py-2 rounded-lg">Cancelar</button>
@@ -328,7 +383,6 @@
         </div>
     </div>
 
-    <!-- MODAL: PRODUTO -->
     <div id="modal-produto" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl max-w-md w-full p-6 space-y-4">
             <h3 class="text-lg font-bold">Cadastrar Produto</h3>
@@ -352,7 +406,6 @@
         </div>
     </div>
 
-    <!-- MODAL DE PEDIDO -->
     <div id="modal-pedido" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-4">
             <div class="flex justify-between items-center border-b pb-2">
@@ -376,6 +429,8 @@
                         <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Condição de Pagamento</label>
                         <select id="ped-condicao" class="w-full border p-2 rounded-lg font-bold text-orange-700 bg-orange-50">
                             <option value="Dinheiro / Pix">Dinheiro / Pix</option>
+                            <option value="Cartão de Crédito">Cartão de Crédito (Taxa 3.1%)</option>
+                            <option value="Débito">Débito (Taxa 1.0%)</option>
                             <option value="Tonetti">Tonetti (Próx. 5º Dia Útil)</option>
                             <option value="Boleto Faturado">Boleto Faturado</option>
                         </select>
@@ -434,7 +489,6 @@
         </div>
     </div>
 
-    <!-- BANCO DE DADOS EM MEMÓRIA -->
     <script>
         let clientes = [
             {codigo: 'CLI01', nome: 'Padaria Central', whatsapp: '11999998888', bairro: 'Bela Vista', pagamento: 'Tonetti'},
@@ -455,8 +509,8 @@
                 cliente: 'Padaria Central',
                 condicao: 'Tonetti',
                 total: 225.00,
-                entregue: false, // Novo Status
-                pago: false,     // Novo Status
+                entregue: false,
+                pago: false,
                 itens: [
                     { produto: 'Coxinha de Frango com Catupiry', tipoItem: 'ENCOMENDA', qtd: 50, unitario: 4.50, subtotal: 225.00, recebidoDaFabrica: false }
                 ]
@@ -468,16 +522,22 @@
         ];
 
         let contasAPagar = [
-            { id: 1, pedidoId: 1, clienteRef: 'Padaria Central', numeroPedido: 1001, valorCusto: 90.00, status: 'Pendente' }
+            { id: 1, ordId: 1, pedidoId: 1, tipo: 'ENCOMENDA', ref: 'Ordem de Fábrica #1001', valorCusto: 90.00, status: 'Pendente' }
         ];
 
+        // Novo array para armazenar as Ordens de Fábrica de forma independente (para encomendas e reposições)
+        let ordensFabrica = [
+            { id: 1, numeroOrdem: 1001, data: '2026-06-30', tipo: 'ENCOMENDA', produto: 'Coxinha de Frango com Catupiry', qtd: 50, custoTotal: 90.00, status: 'Pendente', pedidoId: 1 }
+        ];
+
+        let chartInstance = null; // Instância global para o gráfico
         let itensDoPedidoAtual = [];
 
         function handleLogin(e) { e.preventDefault(); document.getElementById('login-screen').classList.add('hidden'); document.getElementById('main-system').classList.remove('hidden'); initSystem(); }
         function handleLogout() { document.getElementById('main-system').classList.add('hidden'); document.getElementById('login-screen').classList.remove('hidden'); }
 
         function switchView(viewName) {
-            const views = ['dashboard', 'clientes', 'produtos', 'pedidos', 'producao', 'compras', 'estoque'];
+            const views = ['dashboard', 'clientes', 'produtos', 'pedidos', 'producao', 'compras', 'relatorios', 'estoque'];
             views.forEach(v => { document.getElementById(`view-${v}`).classList.add('hidden'); document.getElementById(`btn-${v}`).classList.remove('active-menu'); });
             document.getElementById(`view-${viewName}`).classList.remove('hidden');
             document.getElementById(`btn-${viewName}`).classList.add('active-menu');
@@ -488,6 +548,7 @@
             if(viewName === 'pedidos') { renderPedidos(); renderFinanceiro(); }
             if(viewName === 'producao') renderProducao();
             if(viewName === 'compras') renderContasAPagar();
+            if(viewName === 'relatorios') renderRelatorios();
             if(viewName === 'estoque') renderEstoque();
         }
 
@@ -510,17 +571,30 @@
             return finalDate.toISOString().split('T')[0].split('-').reverse().join('/');
         }
 
+        // DASHBOARD ATUALIZADO COM DESCONTO DE TAXAS OPERACIONAIS DE CARTÃO
         function renderDashboard() {
             document.getElementById('dash-tot-clientes').innerText = clientes.length;
             document.getElementById('dash-tot-produtos').innerText = produtos.length;
             document.getElementById('dash-pedidos-dia').innerText = pedidos.length;
 
-            const faturamentoTotal = pedidos.reduce((acc, curr) => acc + curr.total, 0);
+            let faturamentoTotal = 0;
+            let taxasAcumuladas = 0;
+
+            pedidos.forEach(p => {
+                faturamentoTotal += p.total;
+                if(p.condicao === "Cartão de Crédito") {
+                    taxasAcumuladas += (p.total * 0.0310);
+                } else if(p.condicao === "Débito") {
+                    taxasAcumuladas += (p.total * 0.0100);
+                }
+            });
+
             const custosTotal = contasAPagar.reduce((acc, curr) => acc + curr.valorCusto, 0);
-            const lucroLiquido = faturamentoTotal - custosTotal;
+            const lucroLiquido = faturamentoTotal - custosTotal - taxasAcumuladas;
 
             document.getElementById('balanco-faturamento').innerText = formatBRL(faturamentoTotal);
             document.getElementById('balanco-compras').innerText = formatBRL(custosTotal);
+            document.getElementById('balanco-taxas').innerText = formatBRL(taxasAcumuladas);
             document.getElementById('balanco-lucro').innerText = formatBRL(lucroLiquido);
 
             const tbody = document.getElementById('dash-estoque-critico'); tbody.innerHTML = '';
@@ -564,13 +638,13 @@
                 tbody.innerHTML += `<tr class="border-b bg-white"><td class="p-4 text-xs font-mono">${p.codigo}</td><td class="p-4 font-bold">${p.nome}</td><td class="p-4 text-red-600 font-semibold">${formatBRL(p.custo)}</td><td class="p-4 text-green-700 font-bold">${formatBRL(p.venda)}</td><td class="p-4 text-center font-bold">${p.estoque} un</td><td class="p-4 text-center"><button onclick="editProduto(${index})" class="text-blue-600"><i class="fa-solid fa-pen"></i></button></td></tr>`;
             });
         }
-        function openProdutoModal() { document.getElementById('form-produto').reset(); document.getElementById('produto-idx').value = ""; document.getElementById('modal-produto').classList.remove('hidden'); }
+        function openProdutoModal() { document.getElementById('form-produto').reset(); document.getElementById('produto-idx').value = ""; document.getElementById('modal-produto-title').innerText = "Cadastrar Produto"; document.getElementById('modal-produto').classList.remove('hidden'); }
         function editProduto(idx) {
             const p = produtos[idx]; document.getElementById('produto-idx').value = idx;
             document.getElementById('prod-nome').value = p.nome; document.getElementById('prod-codigo').value = p.codigo;
             document.getElementById('prod-custo').value = p.custo; document.getElementById('prod-venda').value = p.venda; 
             document.getElementById('prod-estoque').value = p.estoque; document.getElementById('prod-minimo').value = p.minimo; 
-            document.getElementById('modal-produto').classList.remove('hidden');
+            document.getElementById('modal-produto-title').innerText = "Editar Produto"; document.getElementById('modal-produto').classList.remove('hidden');
         }
         function saveProduto(e) {
             e.preventDefault(); const idx = document.getElementById('produto-idx').value;
@@ -579,7 +653,7 @@
             closeModal('modal-produto'); renderProdutos();
         }
 
-        // PEDIDOS DE VENDA COM OPERAÇÃO DE ENTREGUE / PAGO
+        // PEDIDOS DE VENDA COM INDICAÇÃO INDIVIDUAL DE ENTREGUE E PAGO
         function renderPedidos() {
             const tbody = document.getElementById('table-pedidos'); tbody.innerHTML = '';
             pedidos.forEach(p => {
@@ -596,7 +670,7 @@
                 tbody.innerHTML += `
                     <tr class="border-b bg-white hover:bg-slate-50 text-xs">
                         <td class="p-4 font-mono font-bold">#${p.numero}</td>
-                        <td class="p-4"><strong>${p.cliente}</strong><br><span class="text-gray-400 text-[10px]">${p.data}</span></td>
+                        <td class="p-4"><strong>${p.cliente}</strong><br><span class="text-gray-400 text-[10px]">${p.data}</span><br><span class="text-orange-600 font-bold text-[9px]">${p.condicao}</span></td>
                         <td class="p-4 text-slate-600">${txtItens}</td>
                         <td class="p-4 text-right font-bold text-slate-900 text-sm">${formatBRL(p.total)}</td>
                         <td class="p-4 text-center">${btnEntrega}</td>
@@ -617,7 +691,6 @@
             const p = pedidos.find(x => x.id === id);
             if(p) { 
                 p.pago = true; 
-                // Dá baixa também na tabela vinculada ao financeiro/receber caso exista lá
                 const fin = financeiro.find(f => f.pedidoId === id);
                 if(fin) fin.status = 'Pago';
                 renderPedidos(); renderFinanceiro(); renderDashboard(); 
@@ -710,7 +783,7 @@
                 }
             }
 
-            // Abate itens que saíram direto do estoque de pronta entrega
+            // Abate itens do estoque instantaneamente se for do tipo ESTOQUE
             itensDoPedidoAtual.forEach(item => {
                 if(item.tipoItem === 'ESTOQUE') {
                     const prodRef = produtos.find(p => p.nome === item.produto);
@@ -734,24 +807,39 @@
             if(editIdStr === "") pedidos.push(novoObjetoPedido); 
             else pedidos[pedidos.findIndex(x => x.id === idFinal)] = novoObjetoPedido;
 
-            let custoFabrilAcumulado = 0;
+            // Injeta as encomendas do cliente na fila ativa de Ordens de Fábrica de forma automatizada
             itensDoPedidoAtual.forEach(item => {
                 if(item.tipoItem === 'ENCOMENDA') {
                     const pRef = produtos.find(p => p.nome === item.produto);
-                    if(pRef) custoFabrilAcumulado += (pRef.custo * item.qtd);
+                    if(pRef) {
+                        let cTotal = pRef.custo * item.qtd;
+                        let ofId = ordensFabrica.length > 0 ? ordensFabrica[ordensFabrica.length - 1].id + 1 : 1;
+                        let numOF = ordensFabrica.length > 0 ? ordensFabrica[ordensFabrica.length - 1].numeroOrdem + 1 : 1001;
+                        
+                        ordensFabrica.push({
+                            id: ofId,
+                            numeroOrdem: numOF,
+                            data: dataPedido,
+                            tipo: 'ENCOMENDA',
+                            produto: item.produto,
+                            qtd: item.qtd,
+                            custoTotal: cTotal,
+                            status: 'Pendente',
+                            pedidoId: idFinal
+                        });
+
+                        contasAPagar.push({
+                            id: contasAPagar.length > 0 ? contasAPagar[contasAPagar.length - 1].id + 1 : 1,
+                            ordId: ofId,
+                            pedidoId: idFinal,
+                            tipo: 'ENCOMENDA',
+                            ref: `Ordem de Fábrica #${numOF}`,
+                            valorCusto: cTotal,
+                            status: 'Pendente'
+                        });
+                    }
                 }
             });
-
-            if(custoFabrilAcumulado > 0) {
-                contasAPagar.push({
-                    id: contasAPagar.length > 0 ? contasAPagar[contasAPagar.length - 1].id + 1 : 1,
-                    pedidoId: idFinal,
-                    numeroPedido: nPedido,
-                    clienteRef: clienteSelecionado,
-                    valorCusto: custoFabrilAcumulado,
-                    status: 'Pendente'
-                });
-            }
 
             if(condicaoPgto === 'Tonetti') {
                 financeiro.push({
@@ -795,130 +883,198 @@
             } 
         }
 
-        // PRODUÇÃO CONSOLIDADA E RECEBIMENTO COM ENTRADA AUTOMÁTICA NO ESTOQUE
+        // SEÇÃO DE PRODUÇÃO: EXIBIÇÃO DE ORDENS ATIVAS
         function renderProducao() {
+            // Preenche seletor do modal de inserção de ordens avulsas/reposição
+            const prodSel = document.getElementById('of-produto'); prodSel.innerHTML = '';
+            produtos.forEach(p => prodSel.innerHTML += `<option value="${p.nome}">${p.nome}</option>`);
+
             const tbody = document.getElementById('table-producao'); tbody.innerHTML = '';
-            
-            // Consolida os itens de encomendas que ainda não foram marcados como recebidos da fábrica
-            const consolidado = {};
-            
-            pedidos.forEach(p => { 
-                p.itens.forEach(i => { 
-                    if(i.tipoItem === 'ENCOMENDA' && !i.recebidoDaFabrica) { 
-                        if(!consolidado[i.produto]) {
-                            consolidado[i.produto] = { qtd: 0, custo: 0 };
-                        }
-                        consolidado[i.produto].qtd += i.qtd; 
-                        const pRef = produtos.find(pr => pr.nome === i.produto); 
-                        if(pRef) consolidado[i.produto].custo += (pRef.custo * i.qtd); 
-                    } 
-                }); 
-            });
-            
-            const keys = Object.keys(consolidado);
-            if(keys.length === 0) { 
-                tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-400 text-sm">Nenhuma pendência de fabricação na fila. Tudo recebido!</td></tr>`; 
-                return; 
-            }
-            
-            keys.forEach(prodName => {
-                tbody.innerHTML += `
-                    <tr class="border-b bg-white text-xs sm:text-sm">
-                        <td class="p-4 font-bold text-gray-800"><i class="fa-solid fa-cookie text-amber-500 mr-2"></i>${prodName}</td>
-                        <td class="p-4 text-center text-base font-mono font-black text-brand-accent">${consolidado[prodName].qtd} un</td>
-                        <td class="p-4 text-right text-red-600 font-bold">${formatBRL(consolidado[prodName].custo)}</td>
-                        <td class="p-4 text-center">
-                            <button onclick="receberMercadoriaDaFabrica('${prodName}', ${consolidado[prodName].qtd})" class="bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 text-xs rounded shadow">
-                                <i class="fa-solid fa-layer-group mr-1"></i> Registrar Recebimento
-                            </button>
-                        </td>
-                    </tr>`;
-            });
-        }
-
-        // REGRA REQUISITADA: DAR ENTRADA AUTOMÁTICA NO ESTOQUE E RETIRAR DA FILA DE PRODUÇÃO
-        function receberMercadoriaDaFabrica(nomeProduto, quantidade) {
-            // 1. Alimenta o estoque
-            const produtoRef = produtos.find(p => p.nome === nomeProduto);
-            if(produtoRef) {
-                produtoRef.estoque += quantidade;
-            }
-            
-            // 2. Dá baixa como recebido nos objetos de origem
-            pedidos.forEach(p => {
-                p.itens.forEach(i => {
-                    if(i.produto === nomeProduto && i.tipoItem === 'ENCOMENDA') {
-                        i.recebidoDaFabrica = true;
-                    }
-                });
-            });
-
-            alert(`Estoque atualizado! +${quantidade} unidades de "${nomeProduto}" integradas ao almoxarifado.`);
-            renderProducao();
-            renderDashboard();
-        }
-
-        function dispararWhatsappGeral() {
-            let texto = `*XAVIER SALGADOS - ORDEM DE COMPRA / PRODUÇÃO*\n\nOlá, segue lista consolidada de encomendas para produção:\n`;
-            let consolidado = {};
-            let totalGeralCusto = 0;
-            pedidos.forEach(p => { p.itens.forEach(i => { if(i.tipoItem === 'ENCOMENDA' && !i.recebidoDaFabrica) { if(!consolidado[i.produto]) consolidado[i.produto] = 0; consolidado[i.produto] += i.qtd; const pRef = produtos.find(pr => pr.nome === i.produto); if(pRef) totalGeralCusto += (pRef.custo * i.qtd); } }); });
-            
-            if(Object.keys(consolidado).length === 0) { alert("Nenhuma encomenda pendente para envio!"); return; }
-            
-            Object.keys(consolidado).forEach(key => { texto += `• ${consolidado[key]} un - *${key}*\n`; });
-            texto += `\n*Valor de Custo Total Provisório:* ${formatBRL(totalGeralCusto)}\n_Por favor, confirmar o recebimento e iniciar fabricação._`;
-            
-            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, '_blank');
-        }
-
-        // CONTAS A PAGAR
-        function renderContasAPagar() {
-            const tbody = document.getElementById('table-contas-pagar'); tbody.innerHTML = '';
-            if(contasAPagar.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400 text-xs">Nenhuma compra ou custo pendente com a fábrica.</td></tr>`;
+            if(ordensFabrica.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-gray-400 text-xs">Nenhuma ordem ativa na fábrica.</td></tr>`;
                 return;
             }
-            contasAPagar.forEach(c => {
-                const isPago = c.status === 'Pago';
+
+            ordensFabrica.forEach(o => {
+                const isFinalizado = o.status === "Recebido";
                 tbody.innerHTML += `
-                    <tr class="border-b text-xs bg-white ${isPago ? 'bg-gray-50 opacity-60' : ''}">
-                        <td class="p-4 font-mono font-bold">Ordem #${c.numeroPedido}</td>
-                        <td class="p-4 text-gray-600">Ref: ${c.clienteRef}</td>
-                        <td class="p-4 text-right font-black text-red-600">${formatBRL(c.valorCusto)}</td>
+                    <tr class="border-b bg-white text-xs ${isFinalizado ? 'opacity-60 bg-gray-50' : ''}">
+                        <td class="p-4 font-mono font-bold">#${o.numeroOrdem}</td>
+                        <td class="p-4 text-gray-500">${o.data}</td>
+                        <td class="p-4"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${o.tipo==='ENCOMENDA'?'bg-amber-100 text-amber-800':'bg-blue-100 text-blue-800'}">${o.tipo}</span></td>
+                        <td class="p-4 font-semibold text-slate-800">${o.produto}</td>
+                        <td class="p-4 text-center font-bold">${o.qtd} un</td>
+                        <td class="p-4 text-right font-bold text-slate-700">${formatBRL(o.custoTotal)}</td>
                         <td class="p-4 text-center">
-                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isPago ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}">${c.status}</span>
-                        </td>
-                        <td class="p-4 text-center space-x-2">
-                            ${isPago 
-                                ? `<span class="text-green-600 font-bold">✓ Pedido Pago</span>`
-                                : `<button onclick="darBaixaCompra(${c.id})" class="bg-slate-700 hover:bg-slate-800 text-white font-bold px-2 py-1 rounded text-[10px]">Dar Baixa (Pago)</button>
-                                   <button onclick="enviarOrdemEspecificaWhatsapp(${c.id})" class="bg-green-600 hover:bg-green-700 text-white px-2 py-1 rounded text-[10px] title="Enviar esta ordem via WhatsApp"><i class="fa-brands fa-whatsapp"></i> Enviar</button>`
+                            ${isFinalizado 
+                                ? `<span class="text-green-600 font-bold">✓ Estoque Alimentado</span>`
+                                : `<button onclick="baixarEntregaFabrica(${o.id})" class="bg-orange-500 hover:bg-orange-600 text-white font-bold px-2 py-1 rounded text-[10px] shadow">Baixar Entrega</button>`
                             }
                         </td>
                     </tr>`;
             });
         }
 
-        function darBaixaCompra(id) {
-            const c = contasAPagar.find(x => x.id === id);
-            if(c) {
-                c.status = 'Pago';
-                renderContasAPagar();
-                renderDashboard();
+        // REGRA DE NEGÓCIO SOLICITADA: BAIXA INTELIGENTE DE ENCOMENDA VS REPOSIÇÃO NO ESTOQUE
+        function baixarEntregaFabrica(idOrdem) {
+            const o = ordensFabrica.find(x => x.id === idOrdem);
+            if(!o) return;
+
+            const pRef = produtos.find(p => p.nome === o.produto);
+            if(!pRef) return;
+
+            if(o.tipo === "ENCOMENDA") {
+                // Diminui o saldo do estoque para manter apenas o saldo remanescente, pois o item vai direto para o cliente
+                pRef.estoque -= o.qtd;
+                // Altera o status do pedido de venda correspondente indicando que a mercadoria chegou da fábrica
+                const pedRef = pedidos.find(p => p.id === o.pedidoId);
+                if(pedRef) {
+                    pedRef.itens.forEach(i => { if(i.produto === o.produto) i.recebidoDaFabrica = true; });
+                }
+            } else if(o.tipo === "REPOSICAO") {
+                // Reposição de estoque adiciona o produto de volta ao estoque principal
+                pRef.estoque += o.qtd;
             }
+
+            o.status = "Recebido";
+            alert(`Entrega da ordem #${o.numeroOrdem} processada! Fluxo de estoque recalculado para o produto ${o.produto}.`);
+            renderProducao();
+            renderDashboard();
         }
 
-        function enviarOrdemEspecificaWhatsapp(id) {
-            const c = contasAPagar.find(x => x.id === id);
-            const pRef = pedidos.find(p => p.id === c.pedidoId);
+        // EXPORTAÇÃO COMPLETA EM FORMATO PLANILHA (.CSV EXCEL) DAS ORDENS SOLICITADAS
+        function gerarPlanilhaOrdemFabrica() {
+            const tipo = document.getElementById('of-tipo').value;
+            const prodNome = document.getElementById('of-produto').value;
+            const qtd = parseInt(document.getElementById('of-qtd').value);
+
+            const pRef = produtos.find(p => p.nome === prodNome);
             if(!pRef) return;
-            
-            let msg = `* Xavier Salgados - Pedido de Fabricação #${c.numeroPedido} *\n\n`;
-            pRef.itens.forEach(i => { if(i.tipoItem === 'ENCOMENDA') msg += `-> ${i.qtd} un - ${i.produto}\n`; });
-            msg += `\n*Valor de Custo:* ${formatBRL(c.valorCusto)}\nRef Cliente: ${c.clienteRef}`;
-            
-            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(msg)}`, '_blank');
+
+            const cTotal = pRef.custo * qtd;
+            const dataAtual = new Date().toISOString().split('T')[0];
+            const numOF = ordensFabrica.length > 0 ? ordensFabrica[ordensFabrica.length - 1].numeroOrdem + 1 : 1001;
+            const ofId = ordensFabrica.length > 0 ? ordensFabrica[ordensFabrica.length - 1].id + 1 : 1;
+
+            // Insere no banco local da sessão
+            ordensFabrica.push({
+                id: ofId,
+                numeroOrdem: numOF,
+                data: dataAtual,
+                tipo: tipo,
+                produto: prodNome,
+                qtd: qtd,
+                custoTotal: cTotal,
+                status: 'Pendente',
+                pedidoId: null
+            });
+
+            contasAPagar.push({
+                id: contasAPagar.length > 0 ? contasAPagar[contasAPagar.length - 1].id + 1 : 1,
+                ordId: ofId,
+                pedidoId: null,
+                tipo: tipo,
+                ref: `Ordem de Fábrica #${numOF} (${tipo})`,
+                valorCusto: cTotal,
+                status: 'Pendente'
+            });
+
+            // Montagem do CSV com o cabeçalho idêntico ao solicitado
+            let csv = "data:text/csv;charset=utf-8,\uFEFF";
+            csv += "Numero do Pedido;Data de Solicitacao;Descricao do Item;Quantidade Solicitado;Valor Unitario;Valor Total\n";
+            csv += `${numOF};${dataAtual};${prodNome};${qtd};${pRef.custo.toFixed(2)};${cTotal.toFixed(2)}\n`;
+            csv += `;;;;VALOR TOTAL DO PEDIDO;${cTotal.toFixed(2)}\n`;
+
+            const encodedUri = encodeURI(csv);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Ordem_Fabrica_#${numOF}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            renderProducao();
+            renderDashboard();
+        }
+
+        // DISPARAR MENSAGEM DO WHATSAPP COM BASE NAS PARCELAS PENDENTES
+        function dispararWhatsappGeral() {
+            let texto = `*XAVIER SALGADOS - FILA DE PRODUÇÃO ATIVA*\n\nOrdens pendentes de fabricação:\n`;
+            let pendentes = ordensFabrica.filter(o => o.status === 'Pendente');
+            if(pendentes.length === 0) { alert("Nenhuma ordem pendente para envio!"); return; }
+            pendentes.forEach(p => { texto += `• Ordem #${p.numeroOrdem} [${p.tipo}] -> ${p.qtd} un - *${p.produto}*\n`; });
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(texto)}`, '_blank');
+        }
+
+        // CONTAS A PAGAR
+        function renderContasAPagar() {
+            const tbody = document.getElementById('table-contas-pagar'); tbody.innerHTML = '';
+            if(contasAPagar.length === 0) { tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400 text-xs">Nenhuma pendência.</td></tr>`; return; }
+            contasAPagar.forEach(c => {
+                const isPago = c.status === 'Pago';
+                tbody.innerHTML += `
+                    <tr class="border-b text-xs bg-white ${isPago ? 'opacity-60' : ''}">
+                        <td class="p-4 font-mono font-bold">${c.ref}</td>
+                        <td class="p-4 text-gray-500 font-bold">${c.tipo}</td>
+                        <td class="p-4 text-right font-black text-red-600">${formatBRL(c.valorCusto)}</td>
+                        <td class="p-4 text-center"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isPago ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}">${c.status}</span></td>
+                        <td class="p-4 text-center">
+                            ${isPago ? `<span class="text-green-600 font-bold">✓ Custo Pago</span>` : `<button onclick="darBaixaCompra(${c.id})" class="bg-slate-700 text-white font-bold px-2 py-1 rounded text-[10px]">Dar Baixa (Pago)</button>`}
+                        </td>
+                    </tr>`;
+            });
+        }
+        function darBaixaCompra(id) { const c = contasAPagar.find(x => x.id === id); if(c) { c.status = 'Pago'; renderContasAPagar(); renderDashboard(); } }
+
+        // NOVA CENTRAL DE RELATÓRIOS E COMPILADOR DO GRÁFICO CHART.JS
+        function renderRelatorios() {
+            // 1. Compila os Salgados mais vendidos
+            const rankingProdutos = {};
+            produtos.forEach(p => rankingProdutos[p.nome] = 0);
+            pedidos.forEach(p => { p.itens.forEach(i => { if(rankingProdutos[i.produto] !== undefined) rankingProdutos[i.produto] += i.qtd; }); });
+
+            const tProd = document.getElementById('report-mais-vendidos'); tProd.innerHTML = '';
+            Object.keys(rankingProdutos).sort((a,b) => rankingProdutos[b] - rankingProdutos[a]).forEach(name => {
+                tProd.innerHTML += `<tr class="border-b bg-white"><td class="p-2 font-semibold">${name}</td><td class="p-2 text-center font-bold text-orange-600">${rankingProdutos[name]} un</td></tr>`;
+            });
+
+            // 2. Compila Faturamento Mensal por Cliente
+            const rankingClientes = {};
+            clientes.forEach(c => rankingClientes[c.nome] = 0);
+            pedidos.forEach(p => { if(rankingClientes[p.cliente] !== undefined) rankingClientes[p.cliente] += p.total; });
+
+            const tCli = document.getElementById('report-clientes-mes'); tCli.innerHTML = '';
+            Object.keys(rankingClientes).sort((a,b) => rankingClientes[b] - rankingClientes[a]).forEach(name => {
+                tCli.innerHTML += `<tr class="border-b bg-white"><td class="p-2 font-semibold">${name}</td><td class="p-2 text-right font-black text-slate-700">${formatBRL(rankingClientes[name])}</td></tr>`;
+            });
+
+            // 3. Montagem e renderização dinâmica do Gráfico Line/Area de variação mês a mês
+            const ctx = document.getElementById('graficoVendasMes').getContext('2d');
+            if (chartInstance) { chartInstance.destroy(); } // Evita vazamento de memória e duplicação
+
+            // Simulador de dados cronológicos baseado no banco local
+            const faturamentoJulho = pedidos.reduce((acc,curr) => acc + curr.total, 0);
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Maio', 'Junho', 'Julho (Atual)'],
+                    datasets: [{
+                        label: 'Variação Bruta de Faturamento (R$)',
+                        data: [15400, 18900, faturamentoJulho], // Maio e Junho estáticos para histórico comparativo
+                        borderColor: '#f97316',
+                        backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
         }
 
         // ESTOQUE
@@ -926,7 +1082,7 @@
             const tbody = document.getElementById('table-estoque'); tbody.innerHTML = '';
             produtos.forEach(p => {
                 const baixo = p.estoque < p.minimo;
-                tbody.innerHTML += `<tr class="border-b ${baixo?'bg-red-50':''}"><td class="p-4 font-mono text-xs">${p.codigo}</td><td class="p-4 font-bold">${p.nome}</td><td class="p-4 text-center font-bold">${p.estoque} un</td><td class="p-4 text-center text-gray-400">${p.minimo} un</td><td class="p-4 text-center">${baixo?'<span class="bg-red-600 text-white text-[10px] px-2 py-0.5 rounded font-bold">SOLICITAR FÁBRICA</span>':'<span class="bg-green-600 text-white text-[10px] px-2 py-0.5 rounded font-bold">Ok</span>'}</td></tr>`;
+                tbody.innerHTML += `<tr class="border-b ${baixo?'bg-red-50':''}"><td class="p-4 font-mono text-xs">${p.codigo}</td><td class="p-4 font-bold">${p.nome}</td><td class="p-4 text-center font-bold">${p.estoque} un</td><td class="p-4 text-center text-gray-400">${p.minimo} un</td><td class="p-4 text-center">${baixo?'<span class="bg-red-600 text-white text-[10px] px-2 py-0.5 rounded font-bold">ALERTA ESTOQUE</span>':'<span class="bg-green-600 text-white text-[10px] px-2 py-0.5 rounded font-bold">Estável</span>'}</td></tr>`;
             });
         }
 
