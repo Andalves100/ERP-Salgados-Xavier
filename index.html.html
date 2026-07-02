@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle de Salgados e Mini Pães</title>
+    <!-- Tailwind CSS para um design bonito -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js para os Gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Firebase SDK (Versão antiga/compatível para funcionar direto no navegador sem complicação) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+</head>
+<body class="bg-gray-100 font-sans flex flex-col md:flex-row min-h-screen">
+
+    <!-- Menu Lateral de Navegação -->
+    <div class="bg-amber-600 text-white w-full md:w-64 p-5 flex flex-col gap-2 shadow-lg">
+        <h1 class="text-xl font-bold mb-5 text-center flex items-center justify-center gap-2">
+            🥐 Delícias App
+        </h1>
+        <button onclick="switchScreen('dashboard')" class="nav-btn bg-amber-700 p-3 rounded font-medium text-left transition hover:bg-amber-800">📊 Painel Geral</button>
+        <button onclick="switchScreen('clientes')" class="nav-btn p-3 rounded font-medium text-left transition hover:bg-amber-700">👥 Clientes</button>
+        <button onclick="switchScreen('produtos')" class="nav-btn p-3 rounded font-medium text-left transition hover:bg-amber-700">📦 Produtos</button>
+        <button onclick="switchScreen('vendas')" class="nav-btn p-3 rounded font-medium text-left transition hover:bg-amber-700">💰 Pedido de Venda</button>
+        <button onclick="switchScreen('compras')" class="nav-btn p-3 rounded font-medium text-left transition hover:bg-amber-700">🛒 Compras (Fornecedor)</button>
+        <button onclick="switchScreen('estoque')" class="nav-btn p-3 rounded font-medium text-left transition hover:bg-amber-700">🏢 Estoque</button>
+    </div>
+
+    <!-- Conteúdo Principal das Telas -->
+    <div class="flex-1 p-6 md:p-10 max-w-7xl mx-auto w-full">
+        
+        <!-- TELA 1: DASHBOARD -->
+        <div id="screen-dashboard" class="screen">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">Painel Geral</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-green-500">
+                    <p class="text-gray-500 text-sm font-semibold uppercase">Faturamento (Mês Atual)</p>
+                    <p id="dash-faturamento" class="text-2xl font-bold text-gray-800">R$ 0,00</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-red-500">
+                    <p class="text-gray-500 text-sm font-semibold uppercase">Compras (Mês Atual)</p>
+                    <p id="dash-compras" class="text-2xl font-bold text-gray-800">R$ 0,00</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-blue-500">
+                    <p class="text-gray-500 text-sm font-semibold uppercase">Lucro Líquido</p>
+                    <p id="dash-lucro" class="text-2xl font-bold text-gray-800">R$ 0,00</p>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow-sm max-h-[400px]">
+                <h3 class="text-lg font-semibold text-gray-700 mb-4">Faturamento Mês a Mês</h3>
+                <canvas id="revenueChart" class="w-full h-64"></canvas>
+            </div>
+        </div>
+
+        <!-- TELA 2: CLIENTES -->
+        <div id="screen-clientes" class="screen hidden">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">Cadastro de Cliente</h2>
+            <form id="form-cliente" class="bg-white p-6 rounded-lg shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4 mb-8" onsubmit="saveCliente(event)">
+                <div class="md:col-span-3">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nome do Cliente *</label>
+                    <input type="text" id="cli-nome" required class="w-full p-2 border rounded focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
+                    <input type="text" id="cli-telefone" class="w-full p-2 border rounded focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Endereço de Entrega</label>
+                    <input type="text" id="cli-endereco" class="w-full p-2 border rounded focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+                <div class="md:col-span-3 text-right">
+                    <button type="submit" class="bg-amber-600 text-white px-6 py-2 rounded hover:bg-amber-700 transition">Salvar Cliente</button>
+                </div>
+            </form>
+            <div class="bg-white rounded-lg shadow-sm overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-100 border-b">
+                            <th class="p-4 font-semibold text-gray-700">Código</th>
+                            <th class="p-4 font-semibold text-gray-700">Nome</th>
+                            <th class="p-4 font-semibold text-gray-700">Telefone</th>
+                            <th class="p-4 font-semibold text-gray-700">Endereço</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-clientes"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TELA 3: PRODUTOS -->
+        <div id="screen-produtos" class="screen hidden">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">Cadastro de Produto</h2>
+            <form id="form-produto" class="bg-white p-6 rounded-lg shadow-sm grid grid-cols-1 md:grid-cols-3 gap-4 mb-8" onsubmit="saveProduto(event)">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nome do Produto *</label>
+                    <input type="text" id="prod-nome" required class="w-full p-2 border rounded focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Custo de Produção/Compra (R$) *</label>
+                    <input type="number" step="0.01" id="prod-custo" required class="w-full p-2 border rounded focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Preço de Venda (R$) *</label>
+                    <input type="number" step="0.01" id="prod-venda" required class="w-full p-2 border rounded focus:ring-2 focus:ring-amber-500 outline-none">
+                </div>
+                <div class="md:col-span-3 text-right">
+                    <button type="submit" class="bg-amber-600 text-white px-6 py-2 rounded hover:bg-amber-700 transition">Salvar Produto</button>
+                </div>
+            </form>
+            <div class="bg-white rounded-lg shadow-sm overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-100 border-b">
+                            <th class="p-4 font-semibold text-gray-700">Produto</th>
+                            <th class="p-4 font-semibold text-gray-700">Custo</th>
+                            <th class="p-4 font-semibold text-gray-700">Preço Venda</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-produtos"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TELA 4: PEDIDO DE VENDA -->
+        <div id="screen-vendas" class="screen hidden">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">Pedido de Venda</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Montador de Pedidos -->
+                <div class="bg-white p-6 rounded-lg shadow-sm lg:col-span-1">
+                    <button onclick="resetFormVenda()" class="w-full bg-amber-500 text-white py-2 px-4 rounded mb-4 hover:bg-amber-600 transition font-bold flex items-center justify-center gap-1">
+                        ✨ Iniciar Novo Pedido
+                    </button>
+                    <h3 class="text-lg font-bold mb-4 text-gray-700 border-t pt-2" id="venda-form-title">Configurar Pedido</h3>
+                    <input type="hidden" id="venda-edit-id">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
+                        <select id="venda-cliente" class="w-full p-2 border rounded focus:ring-2 focus:ring-amber-500 outline-none"></select>
+                    </div>
+                    <div class="mb-4 border-t pt-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Adicionar Item</label>
+                        <select id="venda-item-prod" class="w-full p-2 border rounded mb-2 focus:ring-2 focus:ring-amber-500 outline-none"></select>
+                        <input type="number" id="venda-item-qtd" placeholder="Quantidade" min="1" class="w-full p-2 border rounded mb-2 focus:ring-2 focus:ring-amber-500 outline-none">
+                        <button type="button" onclick="addItemAoCarrinho()" class="w-full bg-gray-200 text-gray-700 py-1 px-2 rounded hover:bg-gray-300 transition text-sm font-medium">+ Adicionar Item</button>
+                    </div>
+                    <div class="border-t pt-4">
+                        <h4 class="text-sm font-semibold text-gray-600 mb-2">Itens do Pedido:</h4>
+                        <ul id="carrinho-lista" class="text-sm text-gray-600 mb-4 divide-y"></ul>
+                        <div class="flex justify-between font-bold text-gray-800 text-lg mb-4">
+                            <span>Total:</span>
+                            <span id="carrinho-total">R$ 0,00</span>
+                        </div>
+                        <button onclick="finalizarPedidoVenda()" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition font-medium">Fechar / Salvar Pedido</button>
+                        <button onclick="cancelarEdicaoVenda()" id="btn-cancelar-venda" class="w-full mt-2 bg-gray-400 text-white py-1 rounded hover:bg-gray-500 transition font-medium hidden">Cancelar Edição</button>
+                    </div>
+                </div>
+                <!-- Histórico/Lista de Pedidos -->
+                <div class="bg-white p-6 rounded-lg shadow-sm lg:col-span-2 overflow-x-auto">
+                    <h3 class="text-lg font-bold mb-4 text-gray-700">Pedidos Realizados</h3>
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-100 border-b">
+                                <th class="p-3 font-semibold text-gray-700">Cliente</th>
+                                <th class="p-3 font-semibold text-gray-700">Itens</th>
+                                <th class="p-3 font-semibold text-gray-700">Total</th>
+                                <th class="p-3 font-semibold text-gray-700">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-vendas"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TELA 5: COMPRAS -->
+        <div id="screen-compras" class="screen hidden">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">Pedido de Compras (Fornecedor)</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Montador do Pedido de Compra -->
+                <div class="bg-white p-6 rounded-lg shadow-sm lg:col-span-1">
+                    <h3 class="text-lg font-bold mb-4 text-gray-700">Montar Pedido de Compra</h3>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Selecione o Item/Produto *</label>
+                        <select id="compra-produto" class="w-full p-2 border rounded focus:ring-2 focus:ring-amber-500 outline-none"></select>
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Quantidade Comprada *</label>
+                        <input type="number" id="compra-qtd" min="1" placeholder="Ex: 50" class="w-full p-2 border rounded focus:ring-2 focus:ring-amber-500 outline-none">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Custo Total deste Item (R$) *</label>
+                        <input type="number" step="0.01" id="compra-custo" placeholder="Ex: 120.00" class="w-full p-2 border rounded focus:ring-2 focus:ring-amber-500 outline-none">
+                    </div>
+                    <button type="button" onclick="addItemAoCarrinhoCompra()" class="w-full bg-amber-600 text-white py-2 rounded hover:bg-amber-700 transition font-medium mb-4">+ Adicionar Item à Lista</button>
+                    
+                    <div class="border-t pt-4">
+                        <h4 class="text-sm font-semibold text-gray-600 mb-2">Lista do Pedido de Compra:</h4>
+                        <ul id="carrinho-compra-lista" class="text-sm text-gray-600 mb-4 divide-y"></ul>
+                        <div class="flex justify-between font-bold text-gray-800 text-lg mb-4">
+                            <span>Total do Pedido:</span>
+                            <span id="carrinho-compra-total">R$ 0,00</span>
+                        </div>
+                        <button onclick="finalizarPedidoCompra()" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition font-medium">Salvar e Fechar Compra</button>
+                    </div>
+                </div>
+
+                <!-- Histórico de Pedidos ao Fornecedor -->
+                <div class="bg-white p-6 rounded-lg shadow-sm lg:col-span-2 overflow-x-auto">
+                    <h3 class="text-lg font-bold mb-4 text-gray-700">Histórico de Pedidos Enviados</h3>
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-100 border-b">
+                                <th class="p-3 font-semibold text-gray-700">Data de Solicitação</th>
+                                <th class="p-3 font-semibold text-gray-700">Itens Solicitados</th>
+                                <th class="p-3 font-semibold text-gray-700">Custo Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-compras"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TELA 6: ESTOQUE -->
+        <div id="screen-estoque" class="screen hidden">
+            <h2 class="text-2xl font-bold mb-6 text-gray-800">Controle de Estoque</h2>
+            <div class="bg-white rounded-lg shadow-sm overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-100 border-b">
+                            <th class="p-4 font-semibold text-gray-700">Produto</th>
+                            <th class="p-4 font-semibold text-gray-700">Quantidade Atual em Estoque</th>
+                            <th class="p-4 font-semibold text-gray-700">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-estoque"></tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- SCRIPT DE LOGICA DO SISTEMA -->
+    <script>
+        // CONFIGURAÇÃO DO SEU FIREBASE (Inserida automaticamente conforme suas chaves)
+        const firebaseConfig = {
+            apiKey: "AIzaSyCv2gi1BMT7oNVtcbh4_Zb1-KtmUtEIieU",
+            authDomain: "erp-xavier-salgados.firebaseapp.com",
+            projectId: "erp-xavier-salgados",
+            storageBucket: "erp-xavier-salgados.firebasestorage.app",
+            messagingSenderId: "300646961651",
+            appId: "1:300646961651:web:831d5727761e24fc784286"
+        };
+
+        // Inicializa o Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Variáveis de estado da Aplicação
+        let clientes = [];
+        let produtos = [];
+        let vendas = [];
+        let compras = [];
+        let carrinhoItens = [];
+        let carrinhoCompraItens = []; 
+        let chartInstance = null;
+
+        // Função simples para alternar entre as telas
+        function switchScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
+            document.getElementById(`screen-${screenId}`).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('bg-amber-700', 'bg-amber-800'));
+            event.currentTarget.classList.add('bg-amber-700');
+        }
+
+        // --- SISTEMA DE CLIENTES ---
+        function saveCliente(e) {
+            e.preventDefault();
+            const nome = document.getElementById('cli-nome').value;
+            const telefone = document.getElementById('cli-telefone').value || "Não informado";
+            const endereco = document.getElementById('cli-endereco').value || "Não informado";
+            
+            // Gerador Código Sequencial (Cli001, Cli002...) baseado na quantidade real existente
+            const proximoNumero = clientes.length + 1;
+            const autoCod = 'Cli' + String(proximoNumero).padStart(3, '0');
+
+            db.collection('clientes').add({ autoCod, nome, telefone, endereco })
+            .then(() => {
+                document.getElementById('form-cliente').reset();
+                loadClientes();
+            });
+        }
+
+        function loadClientes() {
+            db.collection('clientes').orderBy('autoCod', 'asc').onSnapshot(snapshot => {
+                clientes = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                const tbody = document.getElementById('table-clientes');
+                const selectVenda = document.getElementById('venda-cliente');
+                
+                tbody.innerHTML = clientes.map(c => `
+                    <tr class="border-b hover:bg-gray-50"><td class="p-4 font-mono text-sm text-amber-700 font-bold">${c.autoCod}</td><td class="p-4 font-medium">${c.nome}</td><td class="p-4">${c.telefone}</td><td class="p-4">${c.endereco}</td></tr>
+                `).join('');
+
+                selectVenda.innerHTML = '<option value="">Selecione um Cliente</option>' + 
+                    clientes.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+            });
+        }
+
+        // --- SISTEMA DE PRODUTOS ---
+        function saveProduto(e) {
+            e.preventDefault();
+            const nome = document.getElementById('prod-nome').value;
+            const custo = parseFloat(document.getElementById('prod-custo').value);
+            const venda = parseFloat(document.getElementById('prod-venda').value);
+
+            db.collection('produtos').add({ nome, custo, precoVenda: venda })
+            .then(() => {
+                document.getElementById('form-produto').reset();
+                loadProdutos();
+            });
+        }
+
+        function loadProdutos() {
+            db.collection('produtos').onSnapshot(snapshot => {
+                produtos = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                
+                document.getElementById('table-produtos').innerHTML = produtos.map(p => `
+                    <tr class="border-b hover:bg-gray-50"><td class="p-4 font-semibold">${p.nome}</td><td class="p-4 font-mono">R$ ${p.custo.toFixed(2)}</td><td class="p-4 font-mono">R$ ${p.precoVenda.toFixed(2)}</td></tr>
+                `).join('');
+
+                document.getElementById('venda-item-prod').innerHTML = produtos.map(p => `<option value="${p.id}">${p.nome} (R$ ${p.precoVenda.toFixed(2)})</option>`).join('');
+                document.getElementById('compra-produto').innerHTML = produtos.map(p => `<option value="${p.id}">${p.nome}</option>`).join('');
+                
+                atualizarEstoqueETelas();
+            });
+        }
+
+        // --- SISTEMA DE CARRINHO / VENDAS ---
+        function addItemAoCarrinho() {
+            const prodId = document.getElementById('venda-item-prod').value;
+            const qtd = parseInt(document.getElementById('venda-item-qtd').value);
+            if (!qtd || qtd < 1) return alert("Insira uma quantidade válida.");
+
+            const produto = produtos.find(p => p.id === prodId);
+            const itemExistente = carrinhoItens.find(item => item.produtoId === prodId);
+
+            if (itemExistente) {
+                itemExistente.qtd += qtd;
+            } else {
+                carrinhoItens.push({ produtoId: prodId, nome: produto.nome, qtd: qtd, precoVenda: produto.precoVenda });
+            }
+            renderCarrinho();
+        }
+
+        function renderCarrinho() {
+            const lista = document.getElementById('carrinho-lista');
+            lista.innerHTML = carrinhoItens.map((item, index) => `
+                <li class="py-2 flex justify-between items-center">
+                    <span>${item.nome} (x${item.qtd})</span>
+                    <div class="flex items-center gap-2">
+                        <span class="font-medium">R$ ${(item.precoVenda * item.qtd).toFixed(2)}</span>
+                        <button onclick="carrinhoItens.splice(${index},1); renderCarrinho();" class="text-red-500 font-bold hover:text-red-700">✕</button>
+                    </div>
+                </li>
+            `).join('');
+
+            const total = carrinhoItens.reduce((acc, item) => acc + (item.precoVenda * item.qtd), 0);
+            document.getElementById('carrinho-total').innerText = `R$ ${total.toFixed(2)}`;
+            document.getElementById('venda-item-qtd').value = '';
+        }
+
+        function finalizarPedidoVenda() {
+            const clienteId = document.getElementById('venda-cliente').value;
+            const editId = document.getElementById('venda-edit-id').value;
+            if (!clienteId) return alert("Selecione um cliente.");
+            if (carrinhoItens.length === 0) return alert("O carrinho de vendas está vazio.");
+
+            const cliente = clientes.find(c => c.id === clienteId);
+            const total = carrinhoItens.reduce((acc, item) => acc + (item.precoVenda * item.qtd), 0);
+            
+            const pedidoDados = {
+                clienteId,
+                clienteNome: cliente.nome,
+                itens: carrinhoItens,
+                total: total,
+                data: editId ? undefined : firebase.firestore.FieldValue.serverTimestamp(),
+                dataMesAno: new Date().toLocaleDateString('pt-BR', { year: 'numeric', month: '2-digit' })
+            };
+
+            if (editId) {
+                db.collection('vendas').doc(editId).update({
+                    clienteId: pedidoDados.clienteId,
+                    clienteNome: pedidoDados.clienteNome,
+                    itens: pedidoDados.itens,
+                    total: pedidoDados.total
+                }).then(() => resetFormVenda());
+            } else {
+                db.collection('vendas').add(pedidoDados).then(() => resetFormVenda());
+            }
+        }
+
+        function resetFormVenda() {
+            document.getElementById('venda-cliente').value = '';
+            document.getElementById('venda-edit-id').value = '';
+            carrinhoItens = [];
+            renderCarrinho();
+            document.getElementById('venda-form-title').innerText = "Configurar Pedido";
+            document.getElementById('btn-cancelar-venda').classList.add('hidden');
+            loadVendas();
+        }
+
+        function iniciarEdicaoVenda(id) {
+            const venda = vendas.find(v => v.id === id);
+            if (!venda) return;
+
+            document.getElementById('venda-edit-id').value = id;
+            document.getElementById('venda-cliente').value = venda.clienteId;
+            document.getElementById('venda-form-title').innerText = "✏️ Editar Pedido";
+            document.getElementById('btn-cancelar-venda').classList.remove('hidden');
+
+            carrinhoItens = [...venda.itens];
+            renderCarrinho();
+        }
+
+        function cancelarEdicaoVenda() {
+            resetFormVenda();
+        }
+
+        function loadVendas() {
+            db.collection('vendas').orderBy('data', 'desc').onSnapshot(snapshot => {
+                vendas = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                
+                document.getElementById('table-vendas').innerHTML = vendas.map(v => {
+                    const resumoItens = v.itens.map(i => `${i.nome} (x${i.qtd})`).join(', ');
+                    return `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="p-3 font-medium">${v.clienteNome}</td>
+                            <td class="p-3 text-sm text-gray-600 max-w-xs truncate" title="${resumoItens}">${resumoItens}</td>
+                            <td class="p-3 font-bold text-green-600 font-mono">R$ ${v.total.toFixed(2)}</td>
+                            <td class="p-3">
+                                <button onclick="iniciarEdicaoVenda('${v.id}')" class="bg-blue-500 text-white px-3 py-1 text-xs rounded hover:bg-blue-600 transition font-medium">Editar</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                atualizarEstoqueETelas();
+            }, error => console.log("Aguardando carregamento..."));
+        }
+
+        // --- TELA COMPRAS (FORNECEDOR) ---
+        function addItemAoCarrinhoCompra() {
+            const prodId = document.getElementById('compra-produto').value;
+            const qtd = parseInt(document.getElementById('compra-qtd').value);
+            const custoTotalItem = parseFloat(document.getElementById('compra-custo').value);
+
+            if (!prodId) return alert("Selecione um produto.");
+            if (!qtd || qtd < 1) return alert("Insira uma quantidade válida.");
+            if (isNaN(custoTotalItem) || custoTotalItem <= 0) return alert("Insira um custo total válido.");
+
+            const produto = produtos.find(p => p.id === prodId);
+            
+            carrinhoCompraItens.push({
+                produtoId: prodId,
+                nome: produto.nome,
+                qtd: qtd,
+                custoTotal: custoTotalItem
+            });
+            renderCarrinhoCompra();
+        }
+
+        function renderCarrinhoCompra() {
+            const lista = document.getElementById('carrinho-compra-lista');
+            lista.innerHTML = carrinhoCompraItens.map((item, index) => `
+                <li class="py-2 flex justify-between items-center">
+                    <span>${item.nome} (x${item.qtd})</span>
+                    <div class="flex items-center gap-2">
+                        <span class="font-medium text-red-600 font-mono">- R$ ${item.custoTotal.toFixed(2)}</span>
+                        <button onclick="carrinhoCompraItens.splice(${index},1); renderCarrinhoCompra();" class="text-red-500 font-bold hover:text-red-700">✕</button>
+                    </div>
+                </li>
+            `).join('');
+
+            const total = carrinhoCompraItens.reduce((acc, item) => acc + item.custoTotal, 0);
+            document.getElementById('carrinho-compra-total').innerText = `R$ ${total.toFixed(2)}`;
+            
+            document.getElementById('compra-qtd').value = '';
+            document.getElementById('compra-custo').value = '';
+        }
+
+        function finalizarPedidoCompra() {
+            if (carrinhoCompraItens.length === 0) return alert("Adicione pelo menos um item à lista de compras.");
+
+            const totalPedido = carrinhoCompraItens.reduce((acc, item) => acc + item.custoTotal, 0);
+            const hoje = new Date();
+
+            db.collection('compras').add({
+                itens: carrinhoCompraItens,
+                total: totalPedido,
+                data: firebase.firestore.FieldValue.serverTimestamp(),
+                dataCompletaStr: hoje.toLocaleDateString('pt-BR'), 
+                dataMesAno: hoje.toLocaleDateString('pt-BR', { year: 'numeric', month: '2-digit' })
+            }).then(() => {
+                carrinhoCompraItens = [];
+                renderCarrinhoCompra();
+                loadCompras();
+                alert("Pedido de Compra registrado para o fornecedor!");
+            });
+        }
+
+        function loadCompras() {
+            db.collection('compras').orderBy('data', 'desc').onSnapshot(snapshot => {
+                compras = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                
+                document.getElementById('table-compras').innerHTML = compras.map(c => {
+                    const dataExata = c.dataCompletaStr || 'Processando...';
+                    const resumoItens = c.itens ? c.itens.map(i => `${i.nome} (x${i.qtd})`).join(', ') : 'Sem itens';
+                    return `
+                        <tr class="border-b hover:bg-gray-50">
+                            <td class="p-4 text-sm text-gray-700 font-semibold">${dataExata}</td>
+                            <td class="p-4 text-sm text-gray-600 max-w-md truncate" title="${resumoItens}">${resumoItens}</td>
+                            <td class="p-4 text-red-600 font-bold font-mono">R$ ${c.total.toFixed(2)}</td>
+                        </tr>
+                    `;
+                }).join('');
+                atualizarEstoqueETelas();
+            }, error => console.log("Aguardando compras..."));
+        }
+
+        // --- ESTOQUE DINÂMICO E FINANCEIRO ---
+        function atualizarEstoqueETelas() {
+            const mesAtual = new Date().toLocaleDateString('pt-BR', { year: 'numeric', month: '2-digit' });
+            
+            let faturamentoMes = 0;
+            let comprasMes = 0;
+            let dadosGrafico = {};
+
+            vendas.forEach(v => {
+                if (v.dataMesAno === mesAtual) faturamentoMes += v.total;
+                dadosGrafico[v.dataMesAno] = (dadosGrafico[v.dataMesAno] || 0) + v.total;
+            });
+
+            compras.forEach(c => {
+                if (c.dataMesAno === mesAtual) comprasMes += c.total;
+            });
+
+            document.getElementById('dash-faturamento').innerText = `R$ ${faturamentoMes.toFixed(2)}`;
+            document.getElementById('dash-compras').innerText = `R$ ${comprasMes.toFixed(2)}`;
+            const lucro = faturamentoMes - comprasMes;
+            document.getElementById('dash-lucro').innerText = `R$ ${lucro.toFixed(2)}`;
+            document.getElementById('dash-lucro').className = `text-2xl font-bold ${lucro >= 0 ? 'text-green-600' : 'text-red-600'}`;
+
+            const estoqueHTML = produtos.map(prod => {
+                let totalComprado = 0;
+                let totalVendido = 0;
+
+                compras.forEach(c => {
+                    if (c.itens) {
+                        c.itens.forEach(item => {
+                            if (item.produtoId === prod.id) totalComprado += item.qtd;
+                        });
+                    }
+                });
+
+                vendas.forEach(v => {
+                    if (v.itens) {
+                        v.itens.forEach(item => {
+                            if (item.produtoId === prod.id) totalVendido += item.qtd;
+                        });
+                    }
+                });
+
+                const estoqueAtual = totalComprado - totalVendido;
+                let statusBadge = `<span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded font-bold">OK</span>`;
+                if (estoqueAtual <= 5) statusBadge = `<span class="bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded font-bold">Baixo (Comprar)</span>`;
+                if (estoqueAtual <= 0) statusBadge = `<span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded font-bold">Esgotado!</span>`;
+
+                return `
+                    <tr class="border-b hover:bg-gray-50">
+                        <td class="p-4 font-semibold text-gray-700">${prod.nome}</td>
+                        <td class="p-4 font-mono font-bold ${estoqueAtual < 0 ? 'text-red-500' : 'text-gray-800'}">${estoqueAtual} unid.</td>
+                        <td class="p-4">${statusBadge}</td>
+                    </tr>
+                `;
+            }).join('');
+            document.getElementById('table-estoque').innerHTML = estoqueHTML;
+
+            renderizarGrafico(dadosGrafico);
+        }
+
+        function renderizarGrafico(dados) {
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            const mesesOrdenados = Object.keys(dados).sort();
+            const valores = mesesOrdenados.map(m => dados[m]);
+
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: mesesOrdenados,
+                    datasets: [{
+                        label: 'Faturamento por Mês (R$)',
+                        data: valores,
+                        backgroundColor: 'rgba(217, 119, 6, 0.7)',
+                        borderColor: 'rgba(217, 119, 6, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        window.onload = function() {
+            loadClientes();
+            loadProdutos();
+            loadVendas();
+            loadCompras();
+        };
+    </script>
+</body>
+</html>
